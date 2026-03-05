@@ -6,4 +6,6 @@ fn main() {
         println!("{y}");
     }
     println!("{y}");
+    println!("{}", f64::EPSILON);
+    println!("{}", 12.2 % 5.5);
 }
