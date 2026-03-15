@@ -1,8 +1,19 @@
-fn main() {
+struct Foo {
+    val: u32,
+    flag: bool,
+}
 
-    let mut x = 5;
-    println!("Значение x равно {}", x);
-    x = 6;
-    println!("Значение x равно {}", x);
+fn f() -> Foo {
+    let val = 42;
+    Foo {
+        val, 
+        flag: true,
+    }
+}
+
+fn main() {
+    
+    let foo = f();
+    println!("{}, {}", foo.val, foo.flag);
 
 }
