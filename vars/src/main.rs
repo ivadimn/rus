@@ -10,6 +10,14 @@ fn f() -> Foo {
         flag: true,
     }
 }
+pub enum FooE {
+    Bar,
+    Baz(u32, u64),
+    Zoo {
+        val: u32,
+        flag:bool,
+    }
+}
 
 fn main() {
     
