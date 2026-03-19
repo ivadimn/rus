@@ -1,31 +1,37 @@
-struct Foo {
-    val: u32,
-    flag: bool,
+
+use std::io;
+
+#[derive(Debug)]
+pub struct Moo {
+    a: u32,
+    b: u64,
 }
 
-fn f() -> Foo {
-    let val = 42;
-    Foo {
-        val, 
-        flag: true,
-    }
-}
-pub enum FooE {
+#[derive(Debug)]
+pub enum Foo {
     Bar,
     Baz(u32, u64),
     Zoo {
         val: u32,
         flag:bool,
-    }
+    },
+    Moo(Moo),
 }
+
+
 
 fn main() {
     
-    let foo = f();
-    println!("{}, {}", foo.val, foo.flag);
-
-    let x: (i32, f64, u8) = (500, 6.4, 1);
-    let five_hundred = x.0;
-    println!("{five_hundred}");
-
+    let mut number = String::new();
+    io::stdin()
+        .read_line(&mut number)
+        .expect("input failure");
+    let number :u32 = number.trim().parse().expect("bad number");
+    let mut summa: u32 = 0;
+    summa += number % 10;
+    let number = number / 10;
+    summa += number % 10;
+    let number = number / 10;
+    summa += number % 10;
+    println!("{summa}");
 }
