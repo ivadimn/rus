@@ -1,5 +1,5 @@
 
-use std::io;
+use std::io::{self, BufRead, Read, Write};
 
 #[derive(Debug)]
 pub struct Moo {
@@ -18,20 +18,45 @@ pub enum Foo {
     Moo(Moo),
 }
 
+fn read_str() -> io::Result<()> {
+    print!("Введите имя: ");
+    io::stdout().flush();
 
+    let mut name  = String::new();
+    let n = io::stdin().read_line(&mut name)?;
+
+    println!("Прочитана {n} байт.");
+    println!("Привет, {}!", name.trim_end());
+    Ok(())
+}
+
+fn read_strs() -> io::Result<()> {
+    for line in io::stdin().lock().lines() {
+        let line = line?;
+        println!("{} ({} символов)", line, line.len());
+    }
+    Ok(())
+}
+
+fn read_text() -> io::Result<()> {
+    let mut text = String::new();
+    io::stdin().read_to_string(&mut text)?;
+    println!("Текст: {} байт", text.len());
+
+    //binary
+    let mut bin = Vec::with_capacity(64 * 1024);
+    io::stdin().read_to_end(&mut bin)?;
+    println!("Binary: {} байт", bin.len());
+
+    Ok(())
+}
+
+fn  summ() -> io::Result<()> {
+    
+    Ok(())
+}
 
 fn main() {
-    
-    let mut number = String::new();
-    io::stdin()
-        .read_line(&mut number)
-        .expect("input failure");
-    let number :u32 = number.trim().parse().expect("bad number");
-    let mut summa: u32 = 0;
-    summa += number % 10;
-    let number = number / 10;
-    summa += number % 10;
-    let number = number / 10;
-    summa += number % 10;
-    println!("{summa}");
+   let _ = read_text(); 
+   
 }
