@@ -77,21 +77,6 @@ fn read_data() -> io::Result<()> {
     Ok(())
 }
 
-// fn  summ() -> io::Result<()> {
-//     let sum: i64 = io::stdin()
-//         .lock()
-//         .split(b' ')
-//         .map(|chunk| {
-//             let bytes = chunk?;
-//             let num = std::str::from_utf8(&bytes)?.trim().parse::<i64>()?;
-//             Ok::<_, Box<dyn std::error::Error>>(num)
-//         })
-//         .collect::<Result<Vec<_>, _>>()?
-//         .into_iter()
-//         .sum();
-//     Ok(())
-// }
-
 //Уникальные строки — полный пример с подробными комментариями
 fn get_unique() -> io::Result<()> {
     // HashSet для проверки «видели ли мы строку».
@@ -186,6 +171,12 @@ fn std2() {
 }
 
 fn main() {
-   std2();
-   
+    let day = 3;
+    let weekday = match day {
+        1 | 2 | 3 | 4 | 5 => "рабочий",
+        6 | 7 => "выходной",
+        _ => unreachable!("дней недели всего семь"),
+    };
+    println!("Сегодня — {weekday} день");
+
 }
