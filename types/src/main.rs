@@ -36,13 +36,17 @@ fn do_stuff(token: InitToken) {
     // stuff
 }
 
+enum Fooo {
+    Bar,
+    Baz(u32, u64),
+    Zoo {
+        val: u64,
+        flag: bool,
+    }
+}
+
+
 fn main() {
     
-    let t = init();
-    do_stuff(t);
     
-    let x = f1();
-    let Foo{ flag: flag2, ..} = f();
-    println!("Foo: {x:?}");
-    println!("Flag: {flag2}");
 }
