@@ -65,11 +65,25 @@ enum Bar {
 #[repr(align(4096))]
 struct Page([u8; 4096]);
 
+fn inc_val(item: &mut i32) {
+    *item += 1;
+}
+
 fn main() {
     
     let mut x = Page([0; 4096]);
     x.0[0] = 42;
 
     println!("{}", x.0[0]);
+
+    let mut y: i32 = 0;
+    inc_val(&mut y);
+    println!("{}", y);
+
+    let arr = [1, 2, 3, 4, 5, 6];
+    for item in arr.iter() {
+        //inc_val(mut item);
+        println!("{}", item);
+    } 
     
 }
