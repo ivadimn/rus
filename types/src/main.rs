@@ -69,6 +69,10 @@ fn inc_val(item: &mut i32) {
     *item += 1;
 }
 
+fn fopt(a: Option<u32>, b: Option<u32>) -> Option<u32> {
+    Some(a? + b?)
+}
+
 fn main() {
     
     let mut x = Page([0; 4096]);
