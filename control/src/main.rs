@@ -232,9 +232,56 @@ fn fib_vec(n: u32) -> Vec<u32> {
     fibs
 }
 
+fn digit_product(n: u32) -> u8 {
+    let mut number = n;
+    if number == 0 {
+        0u8
+    } else {
+        loop {
+            let mut prod: u32 = 1;
+            while number > 0 {
+                let ost =  number % 10;
+                number /= 10;
+                if ost == 0 {continue;}
+                prod *= ost; 
+            }
+            if prod < 10 {break prod as u8; }
+            number = prod;
+        }
+    }
+    //number
+}
+
+fn uniq_digit(s: &str) -> u8 {
+    let mut exists: Vec<char> = Vec::new();
+    for ch in s.chars() {
+        if exists.contains(&ch) {
+            continue;
+        }
+        exists.push(ch);
+    }    
+    let a = exists[exists.len() - 1];
+    a.to_digit(10).unwrap() as u8
+}
+
+fn missing_num(nums: &[i32]) -> i32 {
+
+    let m = nums.iter().max().unwrap();
+    
+    let mut index :i32 = 0;
+    loop {
+        if !nums.contains(&index) {
+            break index;
+        }
+        index += 1;
+        if index >= *m {
+            break index;
+        }
+    }
+}
+
 fn main() {
-  let fibs = fib_vec(10);
-  for num in fibs.into_iter() {
-    println!("{num}");
-  }
+    println!("{}", missing_num(&[1, 2]));
+    println!("{}", missing_num(&[1, 0, 2, 4]));
+    println!("{}", missing_num(&[0, 4, 2, 5, 3, 6]));
 }
