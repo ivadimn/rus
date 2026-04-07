@@ -280,8 +280,26 @@ fn missing_num(nums: &[i32]) -> i32 {
     }
 }
 
+fn validate_paren(s: &str) -> bool {
+    let mut pc = 0;
+    let chs = s.chars();
+    for ch in chs {
+        match ch {
+            '{' | '(' | '[' => {pc += 1},
+            '}' | ')' | ']' => {pc -= 1},
+            _ => {},
+        };
+    }
+    pc == 0
+}
+
 fn main() {
-    println!("{}", missing_num(&[1, 2]));
-    println!("{}", missing_num(&[1, 0, 2, 4]));
-    println!("{}", missing_num(&[0, 4, 2, 5, 3, 6]));
+    println!("{}", validate_paren(""));
+    println!("{}", validate_paren("()"));
+    println!("{}", validate_paren("()[]{}"));
+    println!("{}", validate_paren("({[]()})"));
+    println!("{}", validate_paren("(}"));
+    println!("{}", validate_paren("()]"));
+    println!("{}", validate_paren("(){"));
+    println!("{}", validate_paren("({)}"));
 }
