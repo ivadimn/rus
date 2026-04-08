@@ -253,15 +253,24 @@ fn digit_product(n: u32) -> u8 {
 }
 
 fn uniq_digit(s: &str) -> u8 {
-    let mut exists: Vec<char> = Vec::new();
+    let strs: Vec<char> = s.chars().collect();
+    let len = s.chars().count();
+    let mut founded: char = '0';
     for ch in s.chars() {
-        if exists.contains(&ch) {
-            continue;
+        let mut count = 0;
+        let mut j = 0;
+        while j < len {
+            if strs[j] == ch {
+                count += 1;
+            }
+            j += 1; 
         }
-        exists.push(ch);
+        if count == 1 {
+            founded = ch;
+            break;
+        }
     }    
-    let a = exists[exists.len() - 1];
-    a.to_digit(10).unwrap() as u8
+    founded.to_digit(10).unwrap() as u8
 }
 
 fn missing_num(nums: &[i32]) -> i32 {
@@ -282,15 +291,58 @@ fn missing_num(nums: &[i32]) -> i32 {
 
 fn validate_paren(s: &str) -> bool {
     let mut pc = 0;
+    let mut stack : Vec<char> = Vec::new();
     let chs = s.chars();
+    let mut error: bool = false;
     for ch in chs {
         match ch {
-            '{' | '(' | '[' => {pc += 1},
-            '}' | ')' | ']' => {pc -= 1},
+            '{' | '(' | '[' => {
+                pc += 1; 
+                stack.push(ch);
+            },
+            '}' => {
+                if let Some(p) = stack.pop() {
+                    if p == '{' {
+                        pc -= 1;
+                    } else {
+                        error = true;
+                        break;
+                    }     
+                } else {
+                    error = true;
+                    break;
+                }
+            },
+            ')' => {
+                if let Some(p) = stack.pop() {
+                    if p == '(' {
+                        pc -= 1;
+                    } else {
+                        error = true;
+                        break;
+                    }     
+                } else {
+                    error = true;
+                    break;
+                } 
+            },
+            ']' => {
+                if let Some(p) = stack.pop() {
+                    if p == '[' {
+                        pc -= 1;
+                    } else {
+                        error = true;
+                        break;
+                    }     
+                } else {
+                    error = true;
+                    break;
+                } 
+            },
             _ => {},
         };
     }
-    pc == 0
+    (!error) && (pc == 0)
 }
 
 fn main() {
