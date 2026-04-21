@@ -29,11 +29,25 @@ fn destroy_account(mut d: Account, a: &mut Account) {
     transfer_balance(&mut d, a, summa);
 }
 
+fn gives_ownership() -> String {
+    let some_string = String::from("yours");
+    some_string
+}
+
+fn takes_and_gives_back(a_string: String) -> String {
+    a_string
+}
+
 fn main() {
-    let a1 = Account {balance: 200};
-    let mut a2 = Account {balance: 0};
-    //let a3 = Account {balance: 40000};
-    //let a1 = Account {balance: 0};
-    destroy_account(a1,  &mut a2);
-    print_balance(a2);
+    //let s1 = gives_ownership();
+
+    let s2 = String::from("hello");
+
+    let r1 = &s2;
+    let r2 = &s2;
+
+    //let s3 = takes_and_gives_back(s2);
+
+    println!("{r1} {r2}");
+    println!("{r1} {r2}");
 }
