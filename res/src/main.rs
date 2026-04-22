@@ -41,13 +41,12 @@ fn takes_and_gives_back(a_string: String) -> String {
 fn main() {
     //let s1 = gives_ownership();
 
-    let s2 = String::from("hello");
+    let mut s = String::from("hello");
 
-    let r1 = &s2;
-    let r2 = &s2;
-
-    //let s3 = takes_and_gives_back(s2);
-
-    println!("{r1} {r2}");
-    println!("{r1} {r2}");
+    s.push_str(", world!");
+    println!("{s}");
+    let s1 = s.clone();
+    println!("{s1}");
+    println!("{s}");
+    
 }
