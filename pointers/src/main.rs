@@ -94,12 +94,12 @@ fn main() {
     transfer_funds(&mut s3, &mut s1, 50);
     destroy_account(s2, &mut s3);
     //print_balance(&s3);
-    let mut bank = Bank {accounts: Vec::new(), credit_rate: 0, debit_reate: 0};
+    let mut bank = Bank {accounts: vec![s1, s3], credit_rate: 0, debit_reate: 0};
     let mut bank2 = Bank {accounts: Vec::new(), credit_rate: 0, debit_reate: 0};
 
-    bank.accounts.push(s1);
+    //bank.accounts.push(s1);
     //bank.accounts.push(s2);
-    bank.accounts.push(s3);
+    //bank.accounts.push(s3);
     bank_info(&bank);
     merge_banks(bank, &mut bank2);
     bank_info(&bank2);
