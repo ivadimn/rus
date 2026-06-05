@@ -1,3 +1,29 @@
+#[derive(Debug)]
+struct Person {
+    name: String,
+    age: u8,
+}
+
+//unit-структура
+struct Unit;
+
+//Кортежная структура
+struct Pair(i32, f32);
+
+//Структура с двумя полями
+struct Point {
+    x: f32,
+    y: f32,
+}
+
+#[allow(dead_code)]
+struct Rectangle {
+    top_left: Point,
+    bottom_right: Point,
+}
+
+
+
 mod foo {
     #[derive(Debug, Default)]
     pub struct Foo {
@@ -75,19 +101,26 @@ fn fopt(a: Option<u32>, b: Option<u32>) -> Option<u32> {
 
 fn main() {
     
-    let mut x = Page([0; 4096]);
-    x.0[0] = 42;
+    //создадим структуру при помощи сокращённой инициализации полей
+    let name = String::from("Peter");
+    let age = 27;
+    let peter = Person {name, age};
 
-    println!("{}", x.0[0]);
+    println!("{:?}", peter);
 
-    let mut y: i32 = 0;
-    inc_val(&mut y);
-    println!("{}", y);
+    //инициализируем Point
+    let point: Point = Point { x: 10.3, y: 0.4 };
 
-    let arr = [1, 2, 3, 4, 5, 6];
-    for item in arr.iter() {
-        //inc_val(mut item);
-        println!("{}", item);
-    } 
+    //получаем доступ к полям структуры
+    println!("Координаты точки: ({}, {})", point.x, point.y);
+
+    let bottom_right = Point {x: 5.2, ..point };
+
+    // bottom_right.y будет тем же самым, что и point.y 
+    // так как взяли это из point
+    println!("вторая точка ");
+
+
+
     
 }
