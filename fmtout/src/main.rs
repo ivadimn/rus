@@ -30,7 +30,7 @@ fn main() {
     println!("Меня зовут {0}, {1} {0}", "Бонд", "Джеймс");
 
     let pi = 3.141592;
-    println!("Pi is roughle {0:.3}", pi);
+    println!("Pi is roughle {0:>len$.prec$}", pi, len = 10, prec=3);
 
     // Создаём структуру, которая хранит в себе `i32`. Назовём её `Structure`.
     #[allow(dead_code)]
