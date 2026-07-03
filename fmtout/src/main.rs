@@ -1,59 +1,39 @@
+use std::fmt;
 
+
+#[derive(Debug)]
+struct MinMax(i64, i64);
+
+struct Point2D {
+    x: f64,
+    y: f64
+}
+
+
+impl fmt::Display for MinMax {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}, {}", self.0, self.1)
+    }
+}
+
+impl fmt::Display for Point2D {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "x = {}, y = {}", self.x, self.y)
+    }
+}
 
 fn main() {
-    // {} автоматически будет заменено на
-    // аргументы. Они будут преобразованы в строку
+    
+    let minmax = MinMax(8, 54);
+    println!("Display: {}", minmax);
+    println!("Debug: {:?}", minmax);
 
-    println!("{} дней", 31);
-
-    // Существует множество способов работы с форматированным выводом. Можно указать
-    // позицию для каждого аргумента.
-    println!("{0}, это {1}. {1}, это {0}", "Алиса", "Боб");
-
-    // Так же можно именовать аргументы.
-    println!("{subject} {verb} {object}",
-             object="ленивую собаку",
-             subject="быстрая коричневая лиса",
-             verb="прыгает через");
-
-    println!("{} из {:#x} людей знают, что такое двоичный код, а остальные нет.", 1, 20);
-    // Можно выравнивать текст, сдвигая его на указанную ширину.
-    // Данный макрос отобразит в консоли
-    // "     1". 5 пробелов и "1".
-    println!("{number:>width$}", number=1, width=6);
-    println!("{number:>w$}", number=2, w=10);
-    // Можно добавить к цифрам пару нулей. Данный макрос выведет "000001".
-    println!("{number:0>width$}", number=1, width=6);
-
-    // Компилятор обязательно проверит, что в макрос передано правильное количество
-    // аргументов.
-    println!("Меня зовут {0}, {1} {0}", "Бонд", "Джеймс");
-
-    let pi = 3.141592;
-    println!("Pi is roughle {0:>len$.prec$}", pi, len = 10, prec=3);
-
-    // Создаём структуру, которая хранит в себе `i32`. Назовём её `Structure`.
-    #[allow(dead_code)]
-    struct Structure(i32);
-
-    // Однако, пользовательские типы данных, например, как эта структура
-    // требуют более сложной обработки для вывода. Данный код не будет работать.
-    //println!("Эта структура `{}` не хочет выводится на экран...", Structure(3));
-    // ИСПРАВЬТЕ ^ Закомментируйте эту строку.
-
-    println!("------------------------------------");
-    // All of these print "Hello x    !"
-    // println!("Hello {:10}!", "ww");
-    // println!("Hello {:1$}!", "x", 12);
-    // println!("Hello {1:0$}!", 5, "x");
-    // println!("Hello {:width$}!", "x", width = 5);
-    // let width = 5;
-    // println!("Hello {:width$}!", "x");
-
-    println!("Hello {0} is {1:.5}", "x", 0.01);
-
-    // Hello {arg 1 ("x")} is {arg 2 (0.01) with precision specified in arg 0 (5)}
-    println!("Hello {1} is {2:.0$}", 5, "x", 0.01);
-
-
+    let p = Point2D {x: 2.6, y: 3.5};
+    println!("Point 2D {}", p);
 }
+
+
+
+
+
+
