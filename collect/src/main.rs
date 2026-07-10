@@ -86,4 +86,15 @@ fn main() {
     let v = vec![1, 2, 3, 4, 5, 6, 7, 8];
     vec_stat(&v);
 
+    let all = &v[..];
+    println!("{:?}", all);
+    let first = &v[..1];
+    println!("{:?}", first);
+    let all_but_first = &v[1..];
+    println!("{:?}", all_but_first);
+    let middle = &v[2..5];
+    println!("{:?}", middle);
+
+
+
 }
