@@ -19,7 +19,7 @@
 // Важно! Обязательна проверка на ошибки. Если пользователь просит переместиться на пиксель за пределами дисплея
 // или ввел неправильный цвет, то вам нужно кинуть панику!
 
-use std::io::{self, Write};
+use std::{io::{self, Write}, process::Command};
 mod matrix;
 use matrix::Matrix;
 
@@ -30,8 +30,8 @@ struct Display {
 }
 
 impl Display {
-    fn move_cursor(mut self, x: u32, y: u32) {
 
+    fn move_cursor(&mut self, x: u32, y: u32) {
         if x  < self.screen.0 && y < self.screen.1 {
             self.cursor.0 = x;
             self.cursor.1 = y;
@@ -39,6 +39,9 @@ impl Display {
         else {
             println!("Вышли за границы дисплея!");
         }
+    }
+    fn set_colour(&mut self, color: u8) {
+        self.matrix.set_colour(self.cursor.0 as u64, self.cursor.1 as u64, color);
     }
 }
 
@@ -54,11 +57,25 @@ fn create_display(max_width: u32, max_height: u32, default_colour: u8) -> Displa
 fn process_commands(display: &mut Display, input: Vec<u64>) {
     // ваш код сюда
     let len = input.len();
-    let index: usize = 0;
+    let mut index: usize = 0;
     while index < len {
-        match input.get(index) {
-            Some(c) => display.move_cursor(input.get(index + 1), y),
+
+        let command = input[index];
+        
+        match command {
+            1 =>  if  index + 2 < len {
+                        let x = input[index + 1] as u32;
+                        let y = input[index + 2] as u32;
+                        display.move_cursor(x, y);    
+                        index += 3;
+                  },
+            2 =>  if  index +1 < len {
+                        display.set_colour(input[index + 1] as u8);    
+                        index += 2;
+                  },
+            _ => println!("Не правильная команда!")      
         }
+            
     }
 }
 
