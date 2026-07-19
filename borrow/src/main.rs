@@ -28,7 +28,7 @@ fn get_slices(s: &[i32], index: usize) -> (&[i32], &[i32]) {
 fn get_4slices(s: &mut [i32]) {
 
     let mut arr_slice: [&[i32]; 4] = [&[]; 4];
-    let mut ran_arr: [usize; 4];
+    let ran_arr: [usize; 4];
     let len = s.len() / 4;
     let ost: usize = s.len() % 4;
 
@@ -39,10 +39,12 @@ fn get_4slices(s: &mut [i32]) {
         ran_arr = [len, len, len, len + ost]
     }
 
+    //println!("{} {}", len, ost);
     let mut left: usize = 0;
     for (l, i) in ran_arr.iter().enumerate() {
-        arr_slice[*i] = &s[left .. left + l];
-        left += l;
+        //arr_slice[*i] = &s[left .. left + l];
+        //left += l;
+        println!("[{}] = {}", *i, l);
     }
     for sl in arr_slice {
         println!("{:?}", sl);
