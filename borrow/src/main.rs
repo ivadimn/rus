@@ -28,18 +28,19 @@ fn get_slices(s: &[i32], index: usize) -> (&[i32], &[i32]) {
 fn get_4slices(s: &mut [i32]) {
 
     let mut arr_slice: [&[i32]; 4] = [&[]; 4];
-    let ran_arr: [usize; 4];
     let len = s.len() / 4;
     let ost: usize = s.len() % 4;
 
-    if ost == 0 {
-        ran_arr = [len; 4];
-    }
-    else {
-        ran_arr = [len, len, len, len + ost]
-    }
-
-    //println!("{} {}", len, ost);
+    let ran_arr: [usize; 4] = if ost == 0 {
+        [len; 4]
+    } else if ost == 1 {
+        [len, len, len, len + ost]
+    } else if ost == 2 {
+        [len, len, len + 1, len + 1]
+    } else {
+        [len, len + 1, len + 1, len + 1]
+    };
+    
     let mut left: usize = 0;
     for (i, l) in ran_arr.iter().enumerate() {
         arr_slice[i] = &s[left .. left + l];
@@ -55,8 +56,8 @@ fn get_4slices(s: &mut [i32]) {
 fn main() {
 
     let x = get_mem(&mut (27, 28), true);
-    let mut arr  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    let mut arr1  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    let mut arr  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    let mut arr1  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
     let s1 = &mut arr[ .. ];    
     let s2 = &mut arr1[ .. ];    
