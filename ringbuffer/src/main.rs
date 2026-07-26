@@ -29,15 +29,14 @@ fn write(rb: &mut RingBuffer, data: &[u8]) -> usize {
 
     for d in data {
         if rb.write_idx < len {
-            //rb.data.insert(rb.write_idx, *d);
             rb.data[rb.write_idx] = *d;
             count += 1;
             rb.write_idx += 1;
         }
-        else {
-            rb.write_idx = 0;
-        }
     }
+    if rb.read_idx == len {
+        rb.read_idx = 0;
+    }    
     count
 }
 
@@ -46,29 +45,40 @@ fn read<'a>(rb: &mut RingBuffer, count: usize, data: &'a mut Vec<u8> ) -> &'a [u
     let len = rb.data.len();
     let mut cread: usize = 0;
 
+    if rb.read_idx >= rb.write_idx {
+        return &[];
+    }
+
     for i in 0 .. count {
-        if rb.read_idx < len {
+        if rb.read_idx < rb.write_idx {
             data.insert(i, rb.data[rb.read_idx]);
+            rb.data[rb.read_idx] = 0;
             rb.read_idx += 1;
             cread += 1;
         }
-        else {
-            rb.read_idx = 0;
-        }
     }
+    if rb.read_idx == len {
+        rb.read_idx = 0;
+    }
+
     let s =  &data[..cread];
     s
-    
+}
+
+fn print_buffer(rb: &RingBuffer) {
+    println!("{:?}", rb.data);
 }
 
 fn main() {
     println!("Hello, world!");
-    let mut v: Vec<u8> = vec![0; 10];
-    let r: std::ops::Range<usize> = 0 .. 5;  
 
-    for i in r {
-        v[i] = 1;
-    }
+    let mut ring = create(3);
 
-    println!("len: {}, {:?}", v.len(), v);
+    let mut writed = write(&mut ring, &[1, 2]);
+    println!("Writed: {} bytes, Result: {:?}", writed, ring.data);
+
+    writed = write(&mut ring, &[3, 4]);
+    println!("Writed: {} bytes, Result: {:?}", writed, ring.data);
+
+    
 }
