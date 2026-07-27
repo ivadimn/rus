@@ -12,6 +12,7 @@
 // [ e _ _ ] read(2) -> return "bc"
 // Ваша задача написать такой буффер и добавить тесты
 
+
 struct RingBuffer {
     read_idx: usize,
     write_idx: usize,
@@ -20,23 +21,28 @@ struct RingBuffer {
 
 fn create(size: usize) -> RingBuffer {
     RingBuffer { read_idx: 0, write_idx: 0, data: vec![0; size]}
-
 }
 
 fn write(rb: &mut RingBuffer, data: &[u8]) -> usize {
     let mut count: usize = 0;
     let len = rb.data.len();
 
+    if rb.write_idx == rb.read_idx + len {
+        return 0;
+    }
+    
     for d in data {
         if rb.write_idx < len {
-            rb.data[rb.write_idx] = *d;
+            rb.data[rb.write_idx % len] = *d;
+            count += 1;
+            rb.write_idx += 1;
+        }
+        if (rb.read_idx > 0) && (rb.write_idx % len < rb.read_idx % len)  {
+            rb.data[rb.write_idx % len] = *d;
             count += 1;
             rb.write_idx += 1;
         }
     }
-    if rb.read_idx == len {
-        rb.read_idx = 0;
-    }    
     count
 }
 
@@ -45,28 +51,24 @@ fn read<'a>(rb: &mut RingBuffer, count: usize, data: &'a mut Vec<u8> ) -> &'a [u
     let len = rb.data.len();
     let mut cread: usize = 0;
 
-    if rb.read_idx >= rb.write_idx {
+    //если индексы совпадают то читать нечего 
+    if rb.read_idx == rb.write_idx {
         return &[];
     }
 
     for i in 0 .. count {
         if rb.read_idx < rb.write_idx {
-            data.insert(i, rb.data[rb.read_idx]);
-            rb.data[rb.read_idx] = 0;
+            data.insert(i, rb.data[rb.read_idx % len]);
+            rb.data[rb.read_idx % len] = 0;
             rb.read_idx += 1;
             cread += 1;
         }
     }
-    if rb.read_idx == len {
-        rb.read_idx = 0;
-    }
-
-    let s =  &data[..cread];
-    s
+    &data[..cread]
 }
 
 fn print_buffer(rb: &RingBuffer) {
-    println!("{:?}", rb.data);
+    println!("wi: {}, ri {}, {:?}", rb.write_idx, rb.read_idx, rb.data);
 }
 
 fn main() {
@@ -75,10 +77,26 @@ fn main() {
     let mut ring = create(3);
 
     let mut writed = write(&mut ring, &[1, 2]);
-    println!("Writed: {} bytes, Result: {:?}", writed, ring.data);
+    print!("Writed: {} bytes -> ", writed);
+    print_buffer(&ring);
 
     writed = write(&mut ring, &[3, 4]);
-    println!("Writed: {} bytes, Result: {:?}", writed, ring.data);
+    print!("Writed: {} bytes -> ", writed);
+    print_buffer(&ring);
+
+    let mut v: Vec<u8> = Vec::new();
+
+    let data = read(&mut ring, 1, &mut v);
+    print!("read: {:?} ", data);
+    print_buffer(&ring);
+
+    writed = write(&mut ring, &[4, 5]);
+    print!("Writed: {} bytes ", writed);
+    print_buffer(&ring);
+
+    let data = read(&mut ring, 2, &mut v);
+    print!("read: {:?} ", data);
+    print_buffer(&ring);
 
     
 }
