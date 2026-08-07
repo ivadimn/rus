@@ -1,17 +1,9 @@
-use regex::Regex;
+//use regex::Regex;
 
 fn main() {
-    let re = Regex::new("picture").unwrap();
-    let quote = "Every face, every shop, bedroom window, public-house, and
-dark square is a picture feverishly turned--in search of what?
-It is the same with books. What do we seek through millions of pages?";
-
-    for line in quote.lines() {
-        let contains_substring = re.find(line);
-        match contains_substring {
-            Some(_) => println!("{}", line),
-            None => {},
-            
-        }
-    }
+    let mut buffer: [u8; 5] = [0; 5];
+    let data = b"Overflowing Content";
+    buffer[.. data.len()].copy_from_slice(data);
+    println!("Overflowing buffer {:?}", buffer);
+    
 }
