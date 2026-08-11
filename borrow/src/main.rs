@@ -54,67 +54,30 @@ fn get_4slices(s: &mut [i32]) {
 }
 
 fn main() {
-
-    let x = get_mem(&mut (27, 28), true);
-    let mut arr  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-    let mut arr1  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-
-    let s1 = &mut arr[ .. ];    
-    let s2 = &mut arr1[ .. ];    
-
-    //let e =  get_elem(s1, 5);
-    //let e1 =  get_elem1(s2, 5);
-
-    //let (sl1, sl2) = get_slices(s1, 5);
-
-    //println!("{:?} {:?}", sl1, sl2);
-    get_4slices(s1);
-
-    let x = 10;
-    print_number(x);
-    println!("x всё ещё доступен: {x}");
-
-    let s = String::from("ownership");
-    let s = take_and_return(s);
-    println!("Строка вернулась обратно: {s}");
-
-    let x = 42;
-    let y = x;
-
-    let project = String::from("calculator");
-    let project = announce(project);
-    println!("Длина project: {}", project.len());
-
-    let release = String::from("rust");
-    let tagged = add_suffix(release.clone());
-    println!("Исходная метка: {release}");
-    println!("Новая метка: {tagged}");
-
-    let label = String::from("move");
-    let label_copy = label.clone();
-    println!("label = {label}, label_copy = {label_copy}");
-
-    println!("x = {x}, y = {y}");
-
-
+    let a: Vec<i32> = vec![1, 2, 3, 4, 5];
+    let result =  get_vec_slice(&a);
+    println!("{:?}", result);
 }
 
-fn print_number(value: i32) {
-    println!("value = {value}");
+fn get_vec_slice(param_1: &[i32]) -> &[i32] {
+    &param_1[0 .. 3]
 }
 
-fn take_and_return(text: String) -> String {
-    println!("Получили: {text}");
-    text
+fn get_str_ref<'a>(param_1: &'a str, param_2: &'a str) -> &'a str {
+    if param_1 > param_2 {
+        param_1
+    } else {
+        param_2
+    }
+}
+
+fn get_int_ref<'a>(param_1: &'a i32, param_2: &'a i32) -> &'a i32 {
+    if param_1 > param_2 {
+        param_1
+    } else {
+        param_2
+    }
 }
 
 
-fn announce(project: String) -> String {
-    println!("Проект: {project}");
-    project
-}
-
-fn add_suffix(text: String) -> String {
-    format!("{text}-v1")
-}
 
