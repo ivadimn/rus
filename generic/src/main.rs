@@ -1,6 +1,5 @@
 struct Point<T> {
     x: T,
-
     y: T,
 }
 
@@ -39,6 +38,7 @@ where T: SomeCustomTrait + std::fmt::Debug {
 fn do_this2(some_var: &dyn SomeCustomTrait) ->String {
     some_var.fun("first", "second")
 }
+
 
 
 
