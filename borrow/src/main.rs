@@ -28,24 +28,24 @@ fn get_slices(s: &[i32], index: usize) -> (&[i32], &[i32]) {
 fn get_4slices(s: &mut [i32]) {
 
     let mut arr_slice: [&[i32]; 4] = [&[]; 4];
+    let ran_arr: [usize; 4];
     let len = s.len() / 4;
     let ost: usize = s.len() % 4;
 
-    let ran_arr: [usize; 4] = if ost == 0 {
-        [len; 4]
-    } else if ost == 1 {
-        [len, len, len, len + ost]
-    } else if ost == 2 {
-        [len, len, len + 1, len + 1]
-    } else {
-        [len, len + 1, len + 1, len + 1]
-    };
-    
+    if ost == 0 {
+        ran_arr = [len; 4];
+    }
+    else {
+        ran_arr = [len, len, len, len + ost]
+    }
+
+    //println!("{} {}", len, ost);
     let mut left: usize = 0;
-    for (i, l) in ran_arr.iter().enumerate() {
-        arr_slice[i] = &s[left .. left + l];
-        left += l;
-        println!("[{}] = {}", i, l);
+    
+    for (l, i) in ran_arr.iter().enumerate() {
+        //arr_slice[*i] = &s[left .. left + l];
+        //left += l;
+        println!("[{}] = {}", *i, l);
     }
     for sl in arr_slice {
         println!("{:?}", sl);
@@ -54,30 +54,20 @@ fn get_4slices(s: &mut [i32]) {
 }
 
 fn main() {
-    let a: Vec<i32> = vec![1, 2, 3, 4, 5];
-    let result =  get_vec_slice(&a);
-    println!("{:?}", result);
+
+    let x = get_mem(&mut (27, 28), true);
+    let mut arr  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    let mut arr1  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+    let s1 = &mut arr[ .. ];    
+    let s2 = &mut arr1[ .. ];    
+
+    //let e =  get_elem(s1, 5);
+    //let e1 =  get_elem1(s2, 5);
+
+    //let (sl1, sl2) = get_slices(s1, 5);
+
+    //println!("{:?} {:?}", sl1, sl2);
+    get_4slices(s1);
+
 }
-
-fn get_vec_slice(param_1: &[i32]) -> &[i32] {
-    &param_1[0 .. 3]
-}
-
-fn get_str_ref<'a>(param_1: &'a str, param_2: &'a str) -> &'a str {
-    if param_1 > param_2 {
-        param_1
-    } else {
-        param_2
-    }
-}
-
-fn get_int_ref<'a>(param_1: &'a i32, param_2: &'a i32) -> &'a i32 {
-    if param_1 > param_2 {
-        param_1
-    } else {
-        param_2
-    }
-}
-
-
-
