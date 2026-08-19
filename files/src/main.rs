@@ -7,34 +7,28 @@ static PROGRAM_NAME: &'static str = "Super App";
 static mut REQUEST_COUNT: u32 = 0;
 
 fn main() {
-    let x = 0.1 + 0.2;
-    let y = 0.3;
-    
-    // Разные способы сравнения
-    println!("Прямое сравнение (неправильно):");
-    println!("  x == y: {}", x == y);
-    
-    let delta: f64 = x - y;
-    println!("\nСравнение с epsilon:");
-    println!("  |x - y| <= epsilon: {}", delta.abs() <= f64::EPSILON);
-    
-    println!("\nОтносительное сравнение:");
-    println!("  approx_eq(x, y, 1e-14): {}", approx_eq(x, y, 1e-14));
-    
-    // Демонстрация работы с разными значениями
-    let test_cases = [
-        (1.0, 1.0 + f64::EPSILON),
-        (1000000.0, 1000000.0 + 0.0001),
-        (0.0, 1e-17),
-        (f64::MIN_POSITIVE, f64::MIN_POSITIVE * 1.1)
-    ];
-    
-    println!("\nРазличные тестовые случаи:");
-    for (a, b) in test_cases.iter() {
-        println!("  Сравнение {} и {}:", a, b);
-        println!("    approx_eq: {}", approx_eq(*a, *b, 1e-14));
+  let mut s = String::from("Hello");
+
+    // Конкатенация
+    let s1 = String::from("Hello, ");
+    let s2 = String::from("world!");
+    let s3 = s1 + &s2; // Обратите внимание: s1 перемещается и больше недоступна
+
+    // Форматирование
+    let formatted = format!("{}, {}!", "Hello", "world"); // Более гибкий способ
+
+    // Срезы и индексация
+    let hello = &s3[0..5];
+
+    // Итерация по символам
+    for c in s3.chars() {
+        println!("{}", c);
     }
 
+    // Итерация по байтам
+    for b in s3.bytes() {
+        println!("{}", b);
+    }
 }
 
 #[allow(dead_code)]
