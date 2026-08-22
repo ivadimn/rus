@@ -259,6 +259,36 @@ fn main() {
     if let Some(result) = divide(10.0, 2.0) {
         println!("Результат: {}", result);
     }
+    let some_number = Some(10);
+    let absent_number: Option<i32> = None;
+
+    print_number(some_number);
+    print_number(absent_number);
+
+    let some_value: Option<i32> = Some(5);
+    let unwrapped_value = some_value.unwrap_or(10);
+    println!("Unwrapped value: {}", unwrapped_value); // Вывод: 5
+
+    let none_value: Option<i32> = None;
+    let default_value = none_value.unwrap_or(10);
+    println!("Default value: {}", default_value); // Вывод: 10
+
+    let some_value: Option<i32> = Some(5);
+    let mapped_value = some_value.map(|x| x * 2);
+    println!("Mapped value: {:?}", mapped_value); // Вывод: Some(10)
+
+    let none_value: Option<i32> = None;
+    let default_value = none_value.map(|x| x * 2);
+    println!("Mapped value: {:?}", default_value); // Вывод: None
+
+
+}
+
+fn print_number(opt_number: Option<i32>) {
+    match opt_number {
+        Some(num) => println!("Number: {}", num),
+        None => println!("No number provided"),
+    }
 }
 
 fn divide(numerator: f64, denominator: f64) -> Option<f64> {
