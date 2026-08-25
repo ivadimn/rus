@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::Deref;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 
 struct AsyncCache<K, V> 
@@ -9,7 +9,7 @@ where
     K: Eq + Hash + Clone,
     V: Clone,
 {
-    data: Arc<HashMap<K, V>>,
+    data: Arc<Mutex<HashMap<K, V>>>,
     max_size: usize,
 } 
 
@@ -20,19 +20,19 @@ where
 {
     pub fn new(max_size: usize) -> Self {
         Self { 
-            data: Arc::new(HashMap::new()), 
+            data: Arc::new( Mutex::new(HashMap::new())), 
             max_size 
         }        
     }
 
     pub async fn insert(&self, key: K, value: V) -> Option<V> {
-        let data = self.data.deref();
-        if data.len() >= self.max_size {
-            if let Some(first_key) = data.keys().next().cloned() {
-                data.remove(&first_key);
+        let data = self.data.clone();
+        if data.lock().unwrap().len() >= self.max_size {
+            if let Some(first_key) = data.lock().unwrap().keys().next().cloned() {
+                data.lock().unwrap().remove(&first_key);
             }
         }
-        data.insert(key, value)
+        data.lock().unwrap().insert(key, value)
     }
 }
 
