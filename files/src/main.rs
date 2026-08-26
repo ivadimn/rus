@@ -1,65 +1,60 @@
-use std::io;
-//use core::ops::AddAssign;
-mod helpers;
-use helpers::*; 
+use std::fs::{self, Metadata};
+use std::io::{self, Write};
+use std::path::Path;
 
-static PROGRAM_NAME: &'static str = "Super App";
-static mut REQUEST_COUNT: u32 = 0;
+fn main() -> std::io::Result<()>  {
+    // let content = fs::read_to_string("http.txt");
+    // match content {
+    //     Ok(s) => println!("Содержимое файла: \n{}", s),
+    //     Err(err) => println!("Ошибка чтения файла: {}", err),
+    // }
+    // let bytes = fs::read("http.txt")?;
+    // println!("Прочитано {} байт", bytes.len());
 
-fn main() {
-  let mut s = String::from("Hello");
+    // fs::write("output.txt", "Привет мир....")?;
 
-    // Конкатенация
-    let s1 = String::from("Hello, ");
-    let s2 = String::from("world!");
-    let s3 = s1 + &s2; // Обратите внимание: s1 перемещается и больше недоступна
+    // let mut file = fs::OpenOptions::new()
+    //     .append(true)
+    //     .create(true)
+    //     .open("log.txt")?;
+    // writeln!(file, "Новая запись в логе")?;
 
-    // Форматирование
-    let formatted = format!("{}, {}!", "Hello", "world"); // Более гибкий способ
+    //fs::create_dir("new_folder")?;
 
-    // Срезы и индексация
-    let hello = &s3[0..5];
+    //fs::create_dir_all("path/to/nested/folder")?;
 
-    // Итерация по символам
-    for c in s3.chars() {
-        println!("{}", c);
+    let entries = fs::read_dir(".")?;
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+        let metadata = entry.metadata()?;
+        let file_type = if metadata.is_dir() {
+            "Директория"
+        } else if metadata.is_file() {
+            "Файл"
+        } else {
+            "Другое"
+        };
+        println!("{}: {}", path.display(), file_type);
     }
 
-    // Итерация по байтам
-    for b in s3.bytes() {
-        println!("{}", b);
+    if let Err(e) = process_file("http.txt") {
+        eprintln!("Ошибка: {}", e)
     }
-}
+   
 
-#[allow(dead_code)]
-fn test_if() {
-    let age_to_drive = 16u8;
-    println!("Enter persons age: ");
-
-    let myinput: &mut String = &mut String::from("");
-    io::stdin().read_line(myinput).unwrap();
-    let age  = myinput.trim().parse::<u8>().unwrap();
-    if age >= age_to_drive {
-        println!("Issuing driver's because they are old enough!");
-    }
-    // let myinput: u8 = match myinput.trim().parse() {
-    //     Ok(num) => num,
-    //     Err(err) => println!("Error: {}", msg),
-    // };
-}
-
-fn approx_eq(a: f64, b: f64, epsilon: f64) -> bool {
-    let abs_diff = (a - b).abs();
+    Ok(())
     
-    if a == b {  // Точное равенство для одинаковых чисел
-        true
-    } else if a == 0.0 || b == 0.0 || abs_diff < f64::MIN_POSITIVE {
-        // Особые случаи при работе с нулём или очень маленькими числами
-        abs_diff < (epsilon * f64::MIN_POSITIVE)
-    } else {
-        // Общий случай - используем относительную погрешность
-        abs_diff / (a.abs() + b.abs()) < epsilon
-    }
 }
 
- 
+fn process_file(path: &str) -> io::Result<()> {
+    let content = fs::read_to_string("http.txt")?;
+
+    match fs::write("output.txt", content) {
+        Ok(_) => println!("Файл успешно записан"),
+        Err(e) => println!("Ошибка при записи: {}", e),        
+    }
+    Ok(())
+
+}
+
