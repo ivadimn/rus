@@ -1,28 +1,23 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
+use std::os::unix::fs::MetadataExt;
+
+
+const RECORD_SIZE: usize = 513;
+
 
 struct Person {
-    name: [u8; 512],
+    name: String,
     age: u8,
 }
 
 impl Person {
     pub fn new(name: String, age: u8) -> Self {
-        let mut obj = Self {
-            name: [0; 512],
-            age 
-        };
-        
-        let tmp =  name.as_bytes();
-        for (i, b) in tmp.into_iter().enumerate() {
-            obj.name[i] = *b;    
-        }
-        obj
+        Self { name, age }
     }
 
-    pub fn get_name(&self) -> String {
-        let vec_name = Vec::from_iter(self.name.into_iter());
-        String::from_utf8(vec_name).unwrap()
+    pub fn get_name(&self) -> &String {
+        &self.name
     }
 
     pub fn save(file_name: &str, data: Vec<&Self>) -> io::Result<()> {
@@ -40,26 +35,62 @@ impl Person {
                 return Err(msg);
             }
         }
+        let mut buffer: [u8; 512] = [0; 512];
         for p in data {
-            file.write(&p.name)?;
+            let buf_name = p.name.as_bytes();
+            for (i, b) in buf_name.into_iter().enumerate() {
+                buffer[i] = *b;
+            }
+
+            file.write(&buffer)?;
             file.write(&[p.age])?;
         }
         Ok(())
     } 
+
+
+    pub fn read(file_name: &str, data: &mut Vec<Self>) -> io::Result<()> {
+
+        //let metadata = fs::metadata(file_name)?;
+        //let size = metadata.size();
+
+        let mut buffer: [u8; 513] = [0; 513];
+        let mut file = File::open(file_name)?;
+
+        loop {
+            let bytes = file.read(&mut buffer)?;
+            if bytes == 0 {break;}
+            let vec = buffer[0 .. 512].to_vec();
+            
+            let p = Self {
+                name: String::from_utf8(vec).unwrap(),
+                age: buffer[512],
+            };
+            println!("Name: {}", p.name);
+            println!("Age: {}", p.age);
+        }
+
+
+        Ok(())
+    }
 }
 
 fn main() -> std::io::Result<()>  {
     
     //let person = Person {name: }
-    let person = Person::new(String::from("Пупкин Иван Семенович"), 77);
+    let person = Person::new(String::from("Сидоров Сергей Петрович"), 34);
 
-    let vec_per:  Vec<&Person> = vec![&person];
+    let mut vec_per:  Vec<Person> = Vec::new();
+    Person::read("person.data", &mut vec_per);
+
     
-    let result = Person::save("person.data", vec_per);
-    match result {
-        Ok(_) => println!("Данные успешно записаны"),
-        Err(msg) => println!("Ошибка: {}", msg),
-    }
+    // let result = Person::save("person.data", vec_per);
+    // match result {
+    //     Ok(_) => println!("Данные успешно записаны"),
+    //     Err(msg) => println!("Ошибка: {}", msg),
+    // }
+
+
     Ok(())
     
 }
