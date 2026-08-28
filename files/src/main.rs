@@ -11,6 +11,34 @@ struct Person {
     age: u8,
 }
 
+struct User {
+    name: String,
+    email: String,
+    status: bool,
+}
+
+impl User {
+    pub fn save(file_name: &str, data: Vec<&Self>) -> io::Result<()> {
+        let file = OpenOptions::new()
+            .write(true)  // Разрешаем запись
+            .append(true) // Устанавливаем режим дозаписи (append)
+            .create(true) // Создаем файл, если он не существует
+            .open(file_name)?; // Открываем файл
+
+
+        let name: [u8; 512] = [0; 512];
+        let email: [u8; 128] = [0; 128];
+        for u in data {
+            u.to
+            let v = unsafe {
+               u.name.as_mut_vec(); 
+            }; 
+            
+        }
+        Ok(())
+    }
+}
+
 impl Person {
     pub fn new(name: String, age: u8) -> Self {
         Self { name, age }
