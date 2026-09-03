@@ -1,11 +1,37 @@
-use std::ops::Add;
+use std::{fmt::Debug, ops::Add, ops::Sub};
 use std::io::BufRead;
 mod jsn;
 use jsn::{Person, struct_to_bytes};
 mod serr;
 use serr::MyError;
+mod wp;
+use wp::*;
 
+trait Drawable {
+    fn draw(&self);
+}
 
+trait Printable {
+    fn print(&self);
+}
+
+trait Displayable : Printable {
+    fn display(&self);
+}
+
+impl Printable for Person {
+    fn print(&self) {
+        println!("Name {}", self.name);
+    }
+}
+
+impl Displayable for Person {
+    fn display(&self) {
+        println!("Выводится на экран: {}", self.name);
+    }
+}
+
+#[derive(Debug)]
 struct Complex {
     real: f64,
     img: f64,
@@ -44,6 +70,73 @@ fn first_line(filename: &str) -> Result<String, MyError> {
     Ok(result)
 }
 
+#[derive(Copy, Clone, Debug)]
+struct MyStruct;
+
+trait Unit: Default + Copy {
+    fn unit(&self) ->&'static str;
+}
+
+#[derive(Default, Copy, Clone, Debug)]
+struct Meter;
+
+impl Unit for Meter {
+    fn unit(&self) ->&'static str {
+        "м"
+    }   
+}
+
+#[derive(Default, Copy, Clone)]
+struct Kilogram;
+
+impl Unit for Kilogram {
+    fn unit(&self) ->&'static str {
+        "кг"
+    }
+}
+
+#[derive(Debug)]
+struct Quantity<U: Unit> {
+    value: f64,
+    unit: U,
+}
+
+impl<U: Unit> Add for Quantity<U> {
+    type Output = Quantity<U>;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            value: self.value + rhs.value,
+            unit: U::default(),
+        }
+    }
+}
+
+impl<U: Unit> Sub for Quantity<U>{
+    type Output = Quantity<U>;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            value: self.value - rhs.value,
+            unit: U::default(),
+        }
+    }    
+}
+
+trait Shape {
+    fn area(&self) -> f64;
+}
+
+
+struct Circle {
+    radius: f64,
+}
+
+impl Shape for Circle {
+    fn area(&self) -> f64 {
+        std::f64::consts::PI * self.radius * self.radius
+    }
+}
+
+
 fn main() {
 
     let p = Person {
@@ -75,4 +168,28 @@ fn main() {
     else {
         println!("Error!");
     }
+
+    let original = MyStruct;
+    let copy = original;
+    let clone = original.clone();
+    
+    println!("Original {:?}", original);
+    println!("Copy {:?}", copy);
+    println!("Clone {:?}", clone);
+
+    p.print();
+    p.display();
+
+    let dist1 = Quantity::<Meter> {value: 5.0, unit: Meter};
+    let dist2 = Quantity::<Meter> {value: 3.0, unit: Meter};
+    let total_dist = dist1 + dist2;
+    println!("Общее расстояние: {:?}", total_dist);
+
+    let c: &dyn Shape = &Circle {radius: 4.0};
+    println!("Площадь окружности {}", c.area());
+
+    wp::attack::<wp::Warrior>();
+    wp::attack::<wp::Mage>();
+
+
 }
