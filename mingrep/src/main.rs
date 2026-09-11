@@ -1,24 +1,7 @@
 use std::env;
-use std::error::Error;
-use std::fs;
+use mingrep::Config;
 
 
-struct Config {
-    query: String,
-    filename: String,
-}
-
-impl Config {
-    fn new(args: &[String]) -> Result<Self, &'static str> {
-        if args.len() < 3 {
-            return  Err("Недостаточно аргументов!!");
-        }
-        let query = args[1].clone();
-        let filename = args[2].clone();
-
-        Ok(Self {query, filename})
-    }
-}
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -30,18 +13,12 @@ fn main() {
     println!("Поиск {}", config.query);
     println!("В файле {}", config.filename);
 
-    if let Err(err) = run(config) {
+    if let Err(err) = mingrep::run(config) {
         println!("Ошибка в приложении: {}", err);
         std::process::exit(1);
     }
 
 }
 
-fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
-    let contents = fs::read_to_string(config.filename)?;
-    println!("С текстом {}", contents);
-
-    Ok(())
-}
 
