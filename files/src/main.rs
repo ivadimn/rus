@@ -1,6 +1,7 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::os::unix::fs::MetadataExt;
+use std::sync::Mutex;
 
 
 const RECORD_SIZE: usize = 513;
@@ -18,7 +19,7 @@ struct User {
 }
 
 impl User {
-    pub fn save(file_name: &str, data: Vec<&Self>) -> io::Result<()> {
+    pub fn save(file_name: &str, data: &mut Vec<Self>) -> io::Result<()> {
         let file = OpenOptions::new()
             .write(true)  // Разрешаем запись
             .append(true) // Устанавливаем режим дозаписи (append)
@@ -26,13 +27,10 @@ impl User {
             .open(file_name)?; // Открываем файл
 
 
+        
         let name: [u8; 512] = [0; 512];
         let email: [u8; 128] = [0; 128];
-        for u in data {
-            u.to
-            let v = unsafe {
-               u.name.as_mut_vec(); 
-            }; 
+        for u in data.iter_mut() {
             
         }
         Ok(())
@@ -83,6 +81,7 @@ impl Person {
         //let size = metadata.size();
 
         let mut buffer: [u8; 513] = [0; 513];
+        //let mut vec_buffer = Vec::new();
         let mut file = File::open(file_name)?;
 
         loop {
