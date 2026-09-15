@@ -3,6 +3,9 @@ use std::io::{Error, ErrorKind, Read, Write};
 
 const HEADER_SIZE: usize = 16;
 
+
+
+#[derive(Default)]
 pub struct Header {
     pub count_items: u64,
     pub start_data_pos: u64,
@@ -16,10 +19,11 @@ struct Item {
     mime_type: String,
 }
 
+#[derive(Default)]
 pub struct Vfs {
     header: Header,
     items: Vec<u8>,
-    file: File,
+    file_name: String,
 }
 
 
@@ -35,7 +39,7 @@ impl Vfs {
         let header = Header { start_data_pos: 0, count_items: 0};
         let items: Vec<u8> = Vec::new();
 
-        Ok(Self { header, items, file })
+        Ok(Self { header, items, file_name: name.to_string() })
     }
 
     pub fn open(name: &str) -> Result<Self, Error> {
