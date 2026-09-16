@@ -30,12 +30,8 @@ pub struct Vfs {
 impl Vfs {
     pub fn create(name: &str) -> Result<Self, Error> {
 
-        let file = OpenOptions::new()
-            .write(true)  // Разрешаем запись
-            .append(true) // Устанавливаем режим дозаписи (append)
-            .create(true) // Создаем файл, если он не существует
-            .open(name)?; 
-
+        let _file = File::create_new(name)?; // Создаем файл, если он не существует
+            
         let header = Header { start_data_pos: 0, count_items: 0};
         let items: Vec<u8> = Vec::new();
 
@@ -51,7 +47,7 @@ impl Vfs {
         let header = Vfs::read_header(&mut file)?;
         let items: Vec<u8> = Vec::new();
         
-        Ok(Self {header, items, file})
+        Ok(Self {header, items, file_name: name.to_string()})
     }
 
     fn read_header(file: &mut File) -> Result<Header, Error> {
@@ -68,6 +64,7 @@ impl Vfs {
                 "Не удалось прочитать заголовок Vfs".to_string()));
         }
         else {
+
             let bytes: &[u8; 8] = buffer[ .. 8].as_array().unwrap();
             count_items = u64::from_ne_bytes(*bytes);
 
@@ -78,15 +75,23 @@ impl Vfs {
         Ok(Header {count_items, start_data_pos})
     }
 
-    pub fn save(&mut self) {
-        let mut header = self.header.count_items.to_ne_bytes().to_vec();
+    pub fn save(&mut self) -> Result<(), Error>{
+
+        let mut file = OpenOptions::new()
+            .write(true)  // Разрешаем запись
+            .append(true) // Устанавливаем режим дозаписи (append)
+            .open(&self.file_name)?;
+
         let bytes = self.header.count_items.to_ne_bytes();
-        header.extend_from_slice(&bytes);
+        let writed = file.write(&bytes)?;
+        println!("Writed len: {}", writed);
+        let bytes = self.header.start_data_pos.to_ne_bytes();
+        let writed = file.write(&bytes)?;
+        println!("Writed len: {}", writed);
 
-        println!("header len: {}", header.len());
-        let writed = self.file.write(&header).unwrap();
-
+        Ok(())
     }
+    
 }
 
 // impl Drop for Vfs {

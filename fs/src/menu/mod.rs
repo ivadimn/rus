@@ -1,4 +1,4 @@
-use fs::get_num;
+use fs::{get_num, get_str};
 
 const MAIN_MENU_COUNT: usize = 5;
 
@@ -23,4 +23,8 @@ pub fn get_menu_item(prompt: &str, menu: &Vec<&str>) -> usize {
         println!("{}", menu_item);
     }
     get_num(prompt, MAIN_MENU_COUNT)
+}
+
+pub fn get_file_name() -> Option<String> {
+    get_str("Введите имя файла (или <stop> для отмены)")
 }

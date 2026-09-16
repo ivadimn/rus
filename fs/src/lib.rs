@@ -27,7 +27,7 @@ pub fn get_num(prompt: &str, max_item: usize) -> usize {
     num
 }
 
-pub fn get_str(prompt: &str) -> String {
+pub fn get_str(prompt: &str) -> Option<String> {
     let mut input = String::new();
     
     loop {
@@ -49,5 +49,11 @@ pub fn get_str(prompt: &str) -> String {
             break;
         }
     }
-    input
+    if input.to_lowercase() == "stop" {
+        None
+    }
+    else {
+        Some(input)
+    }
+    
 }
