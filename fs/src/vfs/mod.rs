@@ -1,8 +1,22 @@
 use std::fs::{File, OpenOptions, metadata};
 use std::io::{Error, ErrorKind, Read, Write};
+use std::mem::size_of;
+use fs::get_mime_type;
 
 const HEADER_SIZE: usize = 16;
 
+
+struct StrData {
+    name_len: u16,
+    name: String,
+}
+
+impl StrData {
+    fn get_len(&mut self) -> u16 {
+        self.name_len = self.name.len() as u16;
+        self.name_len
+    }
+}
 
 
 #[derive(Default)]
@@ -13,16 +27,15 @@ pub struct Header {
 
 struct Item {
     data_size: u64,
+    file_name: StrData,
+    mime_type: StrData,
     item_size: u16,
-    mime_type_size: u8,
-    file_name: String,
-    mime_type: String,
 }
 
 #[derive(Default)]
 pub struct Vfs {
     header: Header,
-    items: Vec<u8>,
+    items: Vec<Item>,
     file_name: String,
 }
 
@@ -33,7 +46,7 @@ impl Vfs {
         let _file = File::create_new(name)?; // Создаем файл, если он не существует
             
         let header = Header { start_data_pos: 0, count_items: 0};
-        let items: Vec<u8> = Vec::new();
+        let items: Vec<Item> = Vec::new();
 
         Ok(Self { header, items, file_name: name.to_string() })
     }
@@ -45,7 +58,7 @@ impl Vfs {
             .open(name)?; 
 
         let header = Vfs::read_header(&mut file)?;
-        let items: Vec<u8> = Vec::new();
+        let items: Vec<Item> = Vec::new();
         
         Ok(Self {header, items, file_name: name.to_string()})
     }
@@ -90,6 +103,33 @@ impl Vfs {
         println!("Writed len: {}", writed);
 
         Ok(())
+    }
+
+    pub fn add(&mut self, file_name: &str) -> Result<(), Error> {
+
+        // let file = OpenOptions::new()
+        //                         .read(true)
+        //                         .open(file_name)?;
+        println!("file name: {}", file_name);
+        let attr = metadata(file_name)?;
+        let mime_type = get_mime_type(file_name); 
+
+        let mut item = Item {
+            data_size: attr.len(),
+            file_name: StrData { name_len: 0, name: file_name.to_string(),}, 
+            mime_type : StrData { name_len: 0, name: mime_type },
+            item_size: 0,
+        };
+        item.item_size = item.file_name.get_len() + item.mime_type.get_len() + size_of::<u64>() as u16;
+        self.items.push(item);
+        
+        Ok(())
+    }
+
+    pub fn show_list(&self) {
+        for item in self.items.iter() {
+            println!("file name: {}, mime_type {}", item.file_name.name, item.mime_type.name);
+        }
     }
     
 }
