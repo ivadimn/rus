@@ -48,10 +48,13 @@ fn main_oper(vfs: &mut Vfs) -> usize {
             }
         },
 
-        2 => println!("Open"),
+        2 => {
+            *vfs = Vfs::open("new.arc").unwrap(); 
+            println!("Open") 
+        },
         3 => println!("Delete"),
         4 => {
-            vfs.save();
+            let _ = vfs.save();
             println!("save");
         },
         _ => {}
