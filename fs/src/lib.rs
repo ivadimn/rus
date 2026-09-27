@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::{fs::File, io::{self, BufReader, Read, Write}};
 
 
 
@@ -95,4 +95,72 @@ pub fn get_mime_type(file_name: &str) -> String {
         "tar" => "application/archive".to_string(),
         _ => "application/bin".to_string(),
     }
+}
+
+pub fn write_buffered(src: &str, archive: &mut File) -> io::Result<()> {
+
+    let file = File::open(src)?;
+    let mut reader = BufReader::new(file);
+    let mut buffer = [0; 65535]; // Буфер на 64 КБ
+    loop {
+        let readed = reader.read(&mut buffer)?;
+        if readed == 0 {
+            break;
+        }
+        let wslice = &buffer[.. readed];
+        archive.write_all(&wslice)?;
+    }
+
+    Ok(())
+}
+
+pub fn write_full(src: &str, archive: &mut File) -> io::Result<()> {
+
+    let mut file = File::open(src)?;
+    let mut buffer: Vec<u8> = Vec::new();
+
+    let _readed = file.read_to_end(&mut buffer)?;
+    archive.write_all(&buffer)?;
+    
+    Ok(())
+}
+
+pub fn read_buffered(archive: &mut BufReader<File>, dst: &str, size: u64) -> io::Result<()> {
+
+    let mut file = File::create(dst)?;
+    let mut buffer = [0; 65535]; // Буфер на 64 КБ
+    let mut total_read = 0usize;
+    let mut up_bound: usize;
+    loop {
+        let readed = archive.read(&mut buffer)?;
+        total_read += readed;
+        if readed == 0  {
+            break;
+        }
+        if total_read > size as usize {
+            up_bound = total_read - size as usize;
+        }
+        else {
+            up_bound = readed;
+        }
+        let wslice = &buffer[.. up_bound];
+        file.write_all(&wslice)?;
+    }
+    Ok(())
+}
+
+pub fn read_full(archive: &mut File, dst: &str, size: u64) -> io::Result<()> {
+
+    let mut buffer = vec![0u8; size as usize];
+
+    archive.read_exact(&mut buffer)?;
+
+    if buffer.len() != size as usize {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, 
+            "Прочитано неправильное количество байт."));
+    }
+    let mut file = File::create(dst)?;
+    file.write_all(&buffer)?;
+
+    Ok(())
 }

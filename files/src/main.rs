@@ -1,8 +1,7 @@
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, Read, Write};
-use std::os::unix::fs::MetadataExt;
-use std::sync::Mutex;
-
+use std::io::{self, Error, Read, Write};
+mod vfs;
+use vfs::{get_metadata, read_items, create_item, item_to_bytes, read_items1, Vfs};
 
 const RECORD_SIZE: usize = 513;
 
@@ -105,10 +104,10 @@ impl Person {
 fn main() -> std::io::Result<()>  {
     
     //let person = Person {name: }
-    let person = Person::new(String::from("Сидоров Сергей Петрович"), 34);
+    // let person = Person::new(String::from("Сидоров Сергей Петрович"), 34);
 
-    let mut vec_per:  Vec<Person> = Vec::new();
-    Person::read("person.data", &mut vec_per);
+    // let mut vec_per:  Vec<Person> = Vec::new();
+    // Person::read("person.data", &mut vec_per);
 
     
     // let result = Person::save("person.data", vec_per);
@@ -117,7 +116,39 @@ fn main() -> std::io::Result<()>  {
     //     Err(msg) => println!("Ошибка: {}", msg),
     // }
 
+    // let mut file = File::create("test.arc")?;
 
+    let fnames  = ["doc1.pdf", "doc2.xlsx", "doc3.pdf", "doc4.pdf", "http.txt"];
+    // let mut vfs = Vfs::create("test.arc");
+    // // //let fnames  = ["doc1.pdf", "http.txt"];
+    
+    // for fname in fnames  {
+    //     vfs.add(fname);
+    // }
+    // match vfs.save() {
+    //     Ok(_) => println!("Архив записан"),
+    //     Err(err)  => println!("Ошибка записи архива {}", err),
+    // };
+
+    let vfs : Vfs;
+    let result =  Vfs::open("test.arc");
+
+    match result {
+        Ok(a) => { println!("Оглавление архива прочитано, 
+                    элементов: {},  размер {}", a.count_items, a.header_size);
+                    vfs = a;
+        },
+        Err(err) =>  {
+            println!("Ошибка чтения архива {}", err);
+            return Err(err);
+        },
+    }
+
+    for item in vfs.items {
+        println!("{:?}", item);
+    }
+    //read_items1("test.arc");
+    //read_all_items("test.arc");
     Ok(())
     
 }

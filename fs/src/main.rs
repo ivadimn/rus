@@ -4,63 +4,70 @@ use menu::{get_menu_item, get_file_name, MAIN_MENU, TASK_MENU};
 mod vfs;
 use vfs::Vfs;
 
+enum MenuResult {
+    Create(String),
+    Open(String),
+    Exit,
+    NextIter,
+}
+
 fn main() {
 
-    let mut is_main = true;
-    let mut vfs = Vfs::default();
-
+    println!("Программа управления архивами!!\n");    
     loop {
-        println!("is_main: {}", is_main);
-        if is_main {
-            let res = main_oper(&mut vfs);
-            if res == 5 {
-                break;
-            }
-            else {
-                is_main = false
-            }
-
-        }
-        else {
-            let res = task_oper(&mut vfs);
-            if res == 5 {
-                is_main = true;
-            }
+        println!("-----------------------------------------------------------------"); 
+        let oper = main_oper();
+        match oper {
+            MenuResult::Create(f) => {
+                let mut vfs = Vfs::create(&f);
+                println!("\nСоздали Vfs {}", f);
+                task_oper(&mut vfs);
+                
+            },
+            MenuResult::Open(f) => {
+                if let Ok(mut vfs) =  Vfs::open(&f){
+                    println!("\nОткрыли Vfs {}", f);
+                    task_oper(&mut vfs);    
+                } else {
+                    println!("Ошибка открытия архива!");
+                }
+            },
+            MenuResult::Exit => break,
+            MenuResult::NextIter => {},
         }
     }
    
 }
 
 
-fn main_oper(vfs: &mut Vfs) -> usize {
+fn main_oper() -> MenuResult {
 
     let main_menu = MAIN_MENU.to_vec();
-    let mut menu_item: usize;
+    let menu_item: usize;
  
     menu_item = get_menu_item("Выберите операцию", &main_menu);
 
     match menu_item {
-        1 =>  {
-            if let Some(name) = get_file_name() {
-                *vfs = Vfs::create(&name).unwrap();
-                vfs.save().unwrap();
-                println!("Create"); 
+        1 => {
+            if let Some(f) = get_file_name() {
+                MenuResult::Create(f)
+            }
+            else {
+                MenuResult::NextIter
+            }
+        }, 
+        2 => {
+            if let Some(f) = get_file_name() {
+                MenuResult::Open(f)
+            }
+            else {
+                MenuResult::NextIter
             }
         },
-
-        2 => {
-            *vfs = Vfs::open("new.arc").unwrap(); 
-            println!("Open") 
-        },
-        3 => println!("Delete"),
-        4 => {
-            let _ = vfs.save();
-            println!("save");
-        },
-        _ => {}
+        3 => MenuResult::Exit,
+        _ => MenuResult::NextIter,
     }
     
-    menu_item
 }
 
 fn task_oper(vfs: &mut Vfs) -> usize {
@@ -72,17 +79,41 @@ fn task_oper(vfs: &mut Vfs) -> usize {
 
         match menu_item {
             1 => {
-                vfs.show_list();
+                println!("Выбрали: показать список");
+                vfs.list_items();
             },
             2 =>  {
+                println!("Выбрали: добавить в архив");
                 if let Some(name) = get_file_name() {
-                    vfs.add(&name).unwrap();
+                     vfs.add(&name);
                 }
             },
 
-            3 => println!("Open"),
-            4 => println!("Delete"),
-            5 => break,
+            3 => {
+                println!("Выбрали: извлечь из архива");
+                if let Some(name) = get_file_name() {
+                    match vfs.take_item(&name) {
+                        Ok(_) => println!("Файл: {} извлечён из архива", name),
+                        Err(err) => println!("Произошла ошибка при извлечении файла: {}", err),
+                    }
+                }
+            },
+            4 =>  {
+                println!("Выбрали: удалить из архива");
+                // if let Some(name) = get_file_name() {
+                //     vfs.add(&name);
+                // }
+            },
+            5 => {
+                println!("Выбрали: сохранить архив");
+                if let Err(err) = vfs.save() {
+                    println!("Ошибка при записи архива на диск: {}", err);
+                } else {
+                    println!("Архив успешно записан на диск.")
+                }
+
+            },
+            6 => break, 
             _ => {}
         }
     }
