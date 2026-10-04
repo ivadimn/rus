@@ -1,4 +1,4 @@
-use fs::{get_num, get_str};
+use fs::{get_num, get_str, get_few_str};
 
 const MAIN_MENU_COUNT: usize = 3;
 const TASK_MENU_COUNT: usize = 6;
@@ -28,4 +28,8 @@ pub fn get_menu_item(prompt: &str, menu: &Vec<&str>) -> usize {
 
 pub fn get_file_name() -> Option<String> {
     get_str("Введите имя файла (или <stop> для отмены)")
+}
+
+pub fn get_file_names() -> Option<Vec<String>> {
+    get_few_str("Введите имена файлов через пробел (или <stop> для отмены)")
 }

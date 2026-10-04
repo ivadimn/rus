@@ -1,7 +1,8 @@
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, Error, Read, Write};
-mod vfs;
-use vfs::{get_metadata, read_items, create_item, item_to_bytes, read_items1, Vfs};
+use std::io::{self, Read, Write};
+
+mod rle;
+use rle::{coder, decoder};
 
 const RECORD_SIZE: usize = 513;
 
@@ -103,54 +104,48 @@ impl Person {
 
 fn main() -> std::io::Result<()>  {
     
-    //let person = Person {name: }
-    // let person = Person::new(String::from("Сидоров Сергей Петрович"), 34);
+    let arr: Vec<u8> = vec![
+        0b00110110,
+        0b00010110,
+        0b11111111,
+        0b11111111,
+        0b00000000,
+    ];
 
-    // let mut vec_per:  Vec<Person> = Vec::new();
-    // Person::read("person.data", &mut vec_per);
+    // let carr: Vec<u8> = vec![
+    //     0b00100010,
+    //     0b00010010,
+    //     0b01000001,
+    //     0b00010010,
+    //     0b10001111,
+    //     0b00000001,
+    //     0b10000000,
+    // ];
 
-    
-    // let result = Person::save("person.data", vec_per);
-    // match result {
-    //     Ok(_) => println!("Данные успешно записаны"),
-    //     Err(msg) => println!("Ошибка: {}", msg),
+   /* 0000 0010
+    0011 0010
+    0100 0001
+    0001 0010
+    0001 0110 */
+
+    for e in arr.iter()   {
+        println!("{:08b}", e);        
+    }
+    println!("\n-------------------------------------------------------\n");
+    let code = coder(arr);
+    for e in code.iter()   {
+        println!("{:08b}", e);        
+    }
+    println!("\n-------------------------------------------------------\n");
+
+    // let decode = decoder(code);
+
+    // for e in decode.iter()   {
+    //     println!("{:08b}", e);        
     // }
 
-    // let mut file = File::create("test.arc")?;
-
-    let fnames  = ["doc1.pdf", "doc2.xlsx", "doc3.pdf", "doc4.pdf", "http.txt"];
-    // let mut vfs = Vfs::create("test.arc");
-    // // //let fnames  = ["doc1.pdf", "http.txt"];
-    
-    // for fname in fnames  {
-    //     vfs.add(fname);
-    // }
-    // match vfs.save() {
-    //     Ok(_) => println!("Архив записан"),
-    //     Err(err)  => println!("Ошибка записи архива {}", err),
-    // };
-
-    let vfs : Vfs;
-    let result =  Vfs::open("test.arc");
-
-    match result {
-        Ok(a) => { println!("Оглавление архива прочитано, 
-                    элементов: {},  размер {}", a.count_items, a.header_size);
-                    vfs = a;
-        },
-        Err(err) =>  {
-            println!("Ошибка чтения архива {}", err);
-            return Err(err);
-        },
-    }
-
-    for item in vfs.items {
-        println!("{:?}", item);
-    }
-    //read_items1("test.arc");
-    //read_all_items("test.arc");
     Ok(())
-    
+
 }
 
 fn process_file(path: &str) -> io::Result<()> {

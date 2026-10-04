@@ -1,8 +1,9 @@
 
 mod menu;
-use menu::{get_menu_item, get_file_name, MAIN_MENU, TASK_MENU};
+use menu::{get_menu_item, get_file_name, get_file_names, MAIN_MENU, TASK_MENU};
 mod vfs;
 use vfs::Vfs;
+mod fileoper;
 
 enum MenuResult {
     Create(String),
@@ -20,16 +21,17 @@ fn main() {
         match oper {
             MenuResult::Create(f) => {
                 let mut vfs = Vfs::create(&f);
-                println!("\nСоздали Vfs {}", f);
+                println!("\nСоздали создали архив с именем: {}", f);
                 task_oper(&mut vfs);
-                
             },
             MenuResult::Open(f) => {
-                if let Ok(mut vfs) =  Vfs::open(&f){
-                    println!("\nОткрыли Vfs {}", f);
-                    task_oper(&mut vfs);    
-                } else {
-                    println!("Ошибка открытия архива!");
+
+                match Vfs::open(&f) {
+                    Ok(mut vfs) => {
+                        println!("\nОткрыли Vfs {}", f);
+                        task_oper(&mut vfs);    
+                    }
+                    Err(err) => println!("Ошибка при открытии архива: {}", err),
                 }
             },
             MenuResult::Exit => break,
@@ -84,8 +86,10 @@ fn task_oper(vfs: &mut Vfs) -> usize {
             },
             2 =>  {
                 println!("Выбрали: добавить в архив");
-                if let Some(name) = get_file_name() {
-                     vfs.add(&name);
+                if let Some(names) = get_file_names() {
+                    for name in names {
+                        let _ =vfs.add(&name);    
+                    }
                 }
             },
 
@@ -100,9 +104,12 @@ fn task_oper(vfs: &mut Vfs) -> usize {
             },
             4 =>  {
                 println!("Выбрали: удалить из архива");
-                // if let Some(name) = get_file_name() {
-                //     vfs.add(&name);
-                // }
+                if let Some(name) = get_file_name() {
+                    match vfs.delete_item(&name) {
+                        Ok(_) => println!("Файл: {} удалён из архива", name),
+                        Err(err) => println!("Произошла ошибка при удалении файла: {}", err),
+                    }
+                }
             },
             5 => {
                 println!("Выбрали: сохранить архив");
@@ -111,7 +118,7 @@ fn task_oper(vfs: &mut Vfs) -> usize {
                 } else {
                     println!("Архив успешно записан на диск.")
                 }
-
+                break;
             },
             6 => break, 
             _ => {}

@@ -1,6 +1,6 @@
 use std::{fs::File, io::{self, BufReader, Read, Write}};
 
-
+const MAX_BUFFER_SIZE: u64 = 65536;
 
 pub fn get_num(prompt: &str, max_item: usize) -> usize {
 
@@ -58,6 +58,38 @@ pub fn get_str(prompt: &str) -> Option<String> {
     
 }
 
+
+pub fn get_few_str(prompt: &str) -> Option<Vec<String>> {
+    let mut input = String::new();
+        
+    loop {
+        print!("{}:> ", prompt);
+        io::stdout().flush().unwrap();    
+        input.clear();
+
+        if io::stdin().read_line(&mut input).unwrap_or(0) == 0 {
+            println!("Попробуйте ещё раз...");
+            continue;
+        }
+
+        if input.len() == 0 {
+            println!("Попробуйте ещё раз...");
+            continue;
+        }
+        else {
+            break;
+        }
+    }
+    let strs: Vec<String> = input.trim().split(" ").map(|s| s.to_string()) .collect();
+    if strs[0].to_lowercase() == "stop" {
+        None
+    }
+    else {
+        Some(strs)
+    }
+}
+
+
 pub fn get_mime_type(file_name: &str) -> String {
 
     let ext: Vec<&str>= file_name.split(".").collect();
@@ -101,7 +133,7 @@ pub fn write_buffered(src: &str, archive: &mut File) -> io::Result<()> {
 
     let file = File::open(src)?;
     let mut reader = BufReader::new(file);
-    let mut buffer = [0; 65535]; // Буфер на 64 КБ
+    let mut buffer = [0u8; 65536]; // Буфер на 64 КБ
     loop {
         let readed = reader.read(&mut buffer)?;
         if readed == 0 {
@@ -128,7 +160,7 @@ pub fn write_full(src: &str, archive: &mut File) -> io::Result<()> {
 pub fn read_buffered(archive: &mut BufReader<File>, dst: &str, size: u64) -> io::Result<()> {
 
     let mut file = File::create(dst)?;
-    let mut buffer = [0; 65535]; // Буфер на 64 КБ
+    let mut buffer = [0u8; 65536]; // Буфер на 64 КБ
     let mut total_read = 0usize;
     let mut up_bound: usize;
     loop {
@@ -137,14 +169,18 @@ pub fn read_buffered(archive: &mut BufReader<File>, dst: &str, size: u64) -> io:
         if readed == 0  {
             break;
         }
-        if total_read > size as usize {
-            up_bound = total_read - size as usize;
+        up_bound = if total_read > size as usize {
+            MAX_BUFFER_SIZE as usize - (total_read - size as usize)
         }
         else {
-            up_bound = readed;
-        }
+            readed
+        };
+        
         let wslice = &buffer[.. up_bound];
         file.write_all(&wslice)?;
+        if up_bound < MAX_BUFFER_SIZE as usize {
+            break;
+        }
     }
     Ok(())
 }
