@@ -105,11 +105,12 @@ impl Person {
 fn main() -> std::io::Result<()>  {
     
     let arr: Vec<u8> = vec![
-        0b00110110,
-        0b00010110,
-        0b11111111,
-        0b11111111,
-        0b00000000,
+        0b00110001,
+        0b00010010,
+        0b11110011,
+        0b11110100,
+        0b00000110,
+        0b00000111,
     ];
 
     // let carr: Vec<u8> = vec![
@@ -128,15 +129,15 @@ fn main() -> std::io::Result<()>  {
     0001 0010
     0001 0110 */
 
-    for e in arr.iter()   {
-        println!("{:08b}", e);        
-    }
-    println!("\n-------------------------------------------------------\n");
-    let code = coder(arr);
-    for e in code.iter()   {
-        println!("{:08b}", e);        
-    }
-    println!("\n-------------------------------------------------------\n");
+    // for e in arr.iter()   {
+    //     println!("{:08b}", e);        
+    // }
+    // println!("\n-------------------------------------------------------\n");
+    // let code = coder(arr);
+    // for e in code.iter()   {
+    //     println!("{:08b}", e);        
+    // }
+    // println!("\n-------------------------------------------------------\n");
 
     // let decode = decoder(code);
 
@@ -144,8 +145,42 @@ fn main() -> std::io::Result<()>  {
     //     println!("{:08b}", e);        
     // }
 
+    let mut position = 0u8;
+    loop {
+        println!("\n\nPosition {}", position);
+        let aref = &arr;
+        for e in aref.into_iter() {
+            //let zero_count = e >> 4;
+            let one_count = e & 15;
+
+            //let number: u16 = (1 << one_count) - 1;
+            
+            let can_insert = 8 - position;
+            if can_insert <=  one_count {
+                //
+            }
+            else {
+                let mut number: u8 = (1 << one_count) - 1; //=3 
+                number <<= get_shift(position, one_count);
+                println!("count {}, {:08b}", one_count, number);
+            }
+        }
+
+        position += 1;
+        if position == 7 {
+            break;
+        }   
+    }
+    
+
     Ok(())
 
+}
+
+
+fn get_shift(position: u8, count: u8) -> u8 {
+    let ost = 8 - position;
+    ost / count + ost % count
 }
 
 fn process_file(path: &str) -> io::Result<()> {
