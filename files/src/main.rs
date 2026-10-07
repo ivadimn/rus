@@ -111,6 +111,7 @@ fn main() -> std::io::Result<()>  {
         0b11110100,
         0b00000110,
         0b00000111,
+        0b00001000,
     ];
 
     // let carr: Vec<u8> = vec![
@@ -155,12 +156,13 @@ fn main() -> std::io::Result<()>  {
 
             //let number: u16 = (1 << one_count) - 1;
             
-            let can_insert = 8 - position;
-            if can_insert <=  one_count {
+            let can_insert = 8 - position; // количество незаполненных бит в текущем байте
+            if can_insert <  one_count {
                 //
             }
             else {
-                let mut number: u8 = (1 << one_count) - 1; //=3 
+                let overflow: u16 = 1 << one_count;
+                let mut number: u8 = (overflow - 1) as u8; //=3 
                 number <<= get_shift(position, one_count);
                 println!("count {}, {:08b}", one_count, number);
             }
@@ -179,8 +181,7 @@ fn main() -> std::io::Result<()>  {
 
 
 fn get_shift(position: u8, count: u8) -> u8 {
-    let ost = 8 - position;
-    ost / count + ost % count
+    8 - position - count
 }
 
 fn process_file(path: &str) -> io::Result<()> {
