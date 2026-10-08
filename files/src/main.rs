@@ -114,6 +114,8 @@ fn main() -> std::io::Result<()>  {
         0b00001000,
     ];
 
+    let mut dec: Vec<u8> = Vec::new();
+
     // let carr: Vec<u8> = vec![
     //     0b00100010,
     //     0b00010010,
@@ -147,16 +149,29 @@ fn main() -> std::io::Result<()>  {
     // }
 
     let mut position = 0u8;
+    let mut byte = 0u8;
     loop {
         println!("\n\nPosition {}", position);
         let aref = &arr;
         for e in aref.into_iter() {
-            //let zero_count = e >> 4;
-            let one_count = e & 15;
+            let mut zero_count = e >> 4;
+            let mut one_count = e & 15;
 
             //let number: u16 = (1 << one_count) - 1;
+            let mut can_insert = 8 - position; // количество незаполненных бит в текущем байте
+
+            if can_insert < zero_count {
+                dec.push(byte);
+                position = 0;
+                zero_count -= can_insert;
+                can_insert = 8 - position;
+                
+
+            } else {
+                position += zero_count;
+            }
+
             
-            let can_insert = 8 - position; // количество незаполненных бит в текущем байте
             if can_insert <  one_count {
                 //
             }
