@@ -2,7 +2,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
 
 mod rle;
-use rle::{coder, decoder};
+use rle::{coder, decoder, coder1};
 
 const RECORD_SIZE: usize = 513;
 
@@ -105,7 +105,7 @@ impl Person {
 fn main() -> std::io::Result<()>  {
     
     let arr: Vec<u8> = vec![
-        0b00110001,
+        0b00110001, 
         0b00010010,
         0b11110011,
         0b11110100,
@@ -113,41 +113,36 @@ fn main() -> std::io::Result<()>  {
         0b11000111,
         0b00001000,
     ];
-    //0001 0110 
-    //0000 0000
-    //0000 0011
-    //1000 0000
-    //0000 0000
-    //1111 0000
-    //0000 0000
-    //0001 1111
-    //1000 0000
-    //0000 0111
-    //1111 1000
 
-    let mut dec: Vec<u8> = Vec::new();
+    let for_code: Vec<u8> = vec![
+        // 0b00010110,
+        // 0b00000000,
+        // 0b00000011,
+        // 0b10111111,
+        // 0b11111100,
+        // 0b11110000,
+        // 0b00000000,
+        // 0b00011111,
+        0b10000000,
+        0b00000111,
+        0b11111111,
+        0b11110000,
+    ];
 
-    // let carr: Vec<u8> = vec![
-    //     0b00100010,
-    //     0b00010010,
-    //     0b01000001,
-    //     0b00010010,
-    //     0b10000100,
-    //     0b00000001,
-    //     0b10000000,
-    // ];
+    //let decode: Vec<u8> = coder1(for_code);
+    let count = 11u64;
+    let steps = count / 15;
 
-   /* 0000 0010
-    0011 0010
-    0100 0001
-    0001 0010
-    0001 0110 */
+    for _ in 0 .. steps {
+        println!("{}", 15);
+    }
+    println!("{}", count % 15);
 
-    // for e in arr.iter()   {
-    //     println!("{:08b}", e);        
+    // for e in decode.iter()   {
+    //     println!("{:?}", e);        
     // }
     // println!("\n-------------------------------------------------------\n");
-    // let code = coder(arr);
+    // let code = coder(for_code);
     // for e in code.iter()   {
     //     println!("{:08b}", e);        
     // }
@@ -156,59 +151,9 @@ fn main() -> std::io::Result<()>  {
     // let decode = decoder(code);
 
     // for e in decode.iter()   {
-    //     println!("{:08b}", e);        
+    //    println!("{:08b}", e);        
     // }
 
-    let mut position = 0u8;
-    let mut byte = 0u8;
-    let mut can_insert = 0u8;
-    let aref = &arr;
-    for e in aref.into_iter() {
-        let mut zero_count = e >> 4;
-        let mut one_count = e & 15;
-        println!("\n--------------------------------------------------------------------------");
-        println!("Текущий обрабатыемый байт {:08b}", e);
-        println!("zero_count {}, one_count {}", zero_count, one_count);
-        
-        //let number: u16 = (1 << one_count) - 1;
-        can_insert = 8 - position; // количество незаполненных бит в текущем байте
-        while can_insert < zero_count {
-            dec.push(byte);
-            byte = 0;
-            position = 0;
-            zero_count -= can_insert;
-            can_insert = 8 - position;
-        }
-        position += zero_count;
-            
-        println!("Позиция перед вставкой ед.  {}", position);    
-        can_insert = 8 - position; // количество незаполненных бит в текущем байте
-
-        while can_insert < one_count {
-            let overflow: u16 = 1 << can_insert;
-            let number: u8 = (overflow - 1) as u8; //=3 
-            byte |= number;
-            dec.push(byte);
-            byte = 0;
-            one_count -= can_insert;
-            position = 0;
-            can_insert = 8 - position;
-        }
-        let overflow: u16 = 1 << one_count;
-        let mut number: u8 = (overflow - 1) as u8; //=3 
-        number <<= get_shift(position, one_count);
-                
-        byte |= number;
-        println!("Byte {:08b}, number после сдвига {:08b}", byte, number);
-        
-        position += one_count;
-        //println!("count {}, {:08b}", one_count, number);
-
-    }
-    dec.push(byte);
-    for e in dec.iter()   {
-         println!("{:08b}", e);        
-    }
     Ok(())
 
 }
