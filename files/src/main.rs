@@ -129,18 +129,11 @@ fn main() -> std::io::Result<()>  {
         0b11110000,
     ];
 
-    //let decode: Vec<u8> = coder1(for_code);
-    let count = 11u64;
-    let steps = count / 15;
-
-    for _ in 0 .. steps {
-        println!("{}", 15);
+    let code: Vec<u8> = coder1(for_code);
+    
+    for e in code.iter()   {
+        println!("{:08b}", e);        
     }
-    println!("{}", count % 15);
-
-    // for e in decode.iter()   {
-    //     println!("{:?}", e);        
-    // }
     // println!("\n-------------------------------------------------------\n");
     // let code = coder(for_code);
     // for e in code.iter()   {
@@ -148,11 +141,11 @@ fn main() -> std::io::Result<()>  {
     // }
     // println!("\n-------------------------------------------------------\n");
 
-    // let decode = decoder(code);
+    let decode = decoder(code);
 
-    // for e in decode.iter()   {
-    //    println!("{:08b}", e);        
-    // }
+    for e in decode.iter()   {
+       println!("{:08b}", e);        
+    }
 
     Ok(())
 

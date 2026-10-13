@@ -3,6 +3,11 @@ const BYTE_LEN: u8 = 8;
 const MAX_BYTE_POSITION: u8 = 7;
 const GROUP_SHIFT: u8 = 4;
 
+enum GroupValue {
+    Zero,
+    One,
+}
+
 pub fn coder(buf: Vec<u8>) -> Vec<u8> {
     let mut code: Vec<u8> = Vec::new();
     let mut index = 0usize;
@@ -60,19 +65,60 @@ pub fn coder1(buf: Vec<u8>) -> Vec<u8> {
     let mut code: Vec<u8> = Vec::new();
 
     let groups: Vec<(u8, u64)> = grouping(buf);
-
-    let mut current_group = 0u8;
     let mut byte = 0u8;
+    
+    let mut gi = groups.iter();
 
-    while let Some(group) = groups.iter().next() {
-
-        let dg = div_group(group);
-
-        if group.0 == current_group {
-
+    let fgroup = &groups[0];
+    if fgroup.0 == 1 {
+        if fgroup.1 <= MAX_LENGTH as u64 {
+            println!("{:08b}", fgroup.1 as u8);
+            code.push(fgroup.1 as u8);
+        } else {
+            let dg = div_group(fgroup);
+            for g in dg {
+                code.push(g);
+            }
         }
+        gi.next().unwrap();
     }
+    
+    while let Some(group) = gi.next() {
 
+        println!("group {:?}", group);
+        if group.0 == 0 {
+            if group.1 <= MAX_LENGTH as u64 {
+                byte =(group.1 as u8) << 4;
+            } else {
+                //получаем список групп 0 или 1 
+                let dg = div_group(group);
+                for i in 0 .. dg.len() - 1 {
+                    byte = dg[i] << 4;
+                    println!("{:08b}", byte);
+                    code.push(byte);
+                }
+                byte = dg[dg.len() - 1] << 4;
+            }
+        } else {
+            if group.1 <= MAX_LENGTH as u64 {
+                byte |= group.1 as u8;
+                println!("{:08b}", byte);
+                code.push(byte);
+            } else {
+                //получаем список групп 0 или 1 
+                let dg = div_group(group);
+                byte |= dg[0];
+                code.push(byte);
+                println!("{:08b}", byte);
+                for i in 1 .. dg.len() {
+                    byte = dg[i];
+                    println!("{:08b}", byte);
+                    code.push(byte);
+                }
+            }
+        }
+       
+    }
     code
     
 }
