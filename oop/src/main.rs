@@ -28,18 +28,46 @@ fn swap_tuple(pair: (i32, i32)) -> (i32, i32) {
     (pair.1, pair.0)
 }
 
+enum Command {
+    Show(&'static str),
+    Add(i32, i32),
+    Multiply(i32, i32),
+    Divide(i32, i32),
+    Stop,
+}
+
+fn calculate(command: &Command) -> Option<i32> {
+    match command  {
+        Command::Add(a, b) => Some(a + b),
+        Command::Multiply(a, b) => Some(a * b),
+        Command::Divide(a, b) if *b != 0 => Some(a / b),
+        _ => None,
+    }
+}
+
 fn main() {
-    let rect = Rectangle {
-        width: 10.0, 
-        height: 5.0,
-    };
-    println!("Площадь: {}", area(rect));
-    let rect = Rectangle {
-        width: 10.0, 
-        height: 5.0,
-    };
-    println!("Периметр: {}", perimeter(rect));
-    println!("22 C = {} F", celsius_to_fahrenheit(22.0));
-    println!("71.6 F = {:.1} C", fahrenheit_to_celsius(71.6));
-    println!("swap = {:?}", swap_tuple((1, 2)));
+    let commands = vec![
+        Command::Show("Стартуем"),
+        Command::Divide(20, 4),
+        Command::Divide(20, 0),
+        Command::Multiply(5, 4),
+        Command::Show("Финишная прямая"),
+    ];    
+
+    for command in &commands  {
+        match command {
+            Command::Show(msg) if let Some(first) = msg.chars().next() => {
+                println!("Сообщение: {}. Первый символ: {}", msg, first);
+            },
+            Command::Stop => {
+                println!("Останавливаем обработку команд");
+                break;
+            }
+            _ => if let Some(result) = calculate(command) {
+                println!("Результат: {}", result);
+            } else {
+                println!("Операция не выполнена.");
+            },
+        }
+    }
 }
