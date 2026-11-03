@@ -3,17 +3,32 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+use std::fmt::{self, Formatter, Display};
+
+#[derive(Debug)]
 struct Rectangle {
-    width: f64,
-    height: f64,
+    width: u32,
+    height: u32,
 }
 
-fn area(rect: Rectangle) -> f64 {
+impl Rectangle  {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+
+impl Display for Rectangle {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "Rectangle(width={}, height={})", self.width, self.height)
+    } 
+}
+
+fn area(rect: Rectangle) -> u32 {
     rect.width * rect.height
 }
 
-fn perimeter(rect: Rectangle) -> f64 {
-    (rect.width + rect.height) * 2.0
+fn perimeter(rect: Rectangle) -> u32 {
+    (rect.width + rect.height) * 2
 }
 
 fn celsius_to_fahrenheit(celsius: f64) -> f64 {
@@ -177,15 +192,43 @@ struct FeedOptions {
     limit: u8,
 }
 
-fn main() {
-    let price = 12.3456;
-    let name = "Rust";
+#[derive(Debug)]
+struct Point {
+    x: i32,
+    y: i32,
+}
 
-    println!("{name}");
-    println!("{:.2}", price);
-    println!("|{:>8}|", name);
-    println!("|{:<8}|", name);
-    println!("|{:^8}|", name);
-    println!("|{:0>6}|", 31);
-    println!("{0} / {1} / {0}", "Display", "Debug");
+fn call_twice<F: FnMut()>(mut f: F) {
+    f();
+    f();
+    f();
+}
+
+fn main() {
+//     let price = 12.3456;
+//     let name = "Rust";
+// 
+//     println!("{name}");
+//     println!("{:.2}", price);
+//     println!("|{:>8}|", name);
+//     println!("|{:<8}|", name);
+//     println!("|{:^8}|", name);
+//     println!("|{:0>6}|", 31);
+//     println!("{0} / {1} / {0}", "Display", "Debug");
+
+    // let rect = Rectangle {width: 10, height: 5};
+    // println!("Для пользователя: {}", rect);
+    // println!("Для отладки: {:?}", rect);
+    // println!("Для красивой отладки: {:#?}", rect);
+    // let report = format!("Отчёт: {} | area={}", rect, rect.area());
+    // println!("{}", report);
+    // println!("Ширина справа: |{:>4}|", rect.width);
+    let mut count = 0;
+    
+    let mut next = || {
+        count += 1;
+        println!("{count}");
+    };
+    
+    call_twice(&mut next);
 }
