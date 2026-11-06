@@ -1,64 +1,105 @@
-use std::sync::Arc;
-use std::convert::From;
-use std::convert::TryFrom;
+#![allow(unused_variables)]
+#![allow(dead_code)]
+#![allow(unused_assignments)]
+#![allow(unused_mut)]
 
+use std::collections::HashMap;
 
-fn add(x: i32, y: i32) -> i32 {
-    x + y
+#[derive(Debug, Clone)]
+struct InventoryItem {
+    id: u32,
+    name: String,
+    quantity: u32,
+    price: f64,
 }
 
-fn apply_operation(x: i32, y: i32, operation: fn(i32, i32) -> i32) -> i32 {
-    operation(x, y)
+struct Inventory {
+    items: Vec<InventoryItem>,
+    item_index: HashMap<u32, usize>,  // Быстрый поиск по id
+    name_index: HashMap<String, Vec<usize>>, // Поиск по имени
 }
 
-struct Kilometers(f64);
-struct Miles(f64);
-
-impl From<Miles> for Kilometers {
-    fn from(value: Miles) -> Self {
-        Kilometers(value.0 * 1.609344)
-    }
-}
-#[derive(Debug)]
-struct PositiveNumber(i32);
-
-impl TryFrom<i32> for PositiveNumber {
-    type Error = String;
-
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
-        if value >= 0 {
-            Ok(PositiveNumber(value))
-        } else {
-            Err(String::from("Число должно быть положительным"))
+impl Inventory {
+    fn new() -> Self {
+        Inventory {
+            items: Vec::new(),
+            item_index: HashMap::new(),
+            name_index: HashMap::new(),
         }
     }
+    fn add_item(&mut self, item: InventoryItem) {
+        let idx = self.items.len();
+        self.items.push(item.clone());
+        self.item_index.insert(item.id, idx);
+        self.name_index.entry(item.name.clone())
+            .or_insert_with(Vec::new)
+            .push(idx);
+    }
+    fn find_by_id(&self, id: u32) -> Option<&InventoryItem> {
+        self.item_index.get(&id)
+            .and_then(|&idx| self.items.get(idx))
+    }
+    fn find_by_name(&self, name: &str) -> Vec<&InventoryItem> {
+        self.name_index.get(name)
+            .map(|indices| {
+                indices.iter()
+                    .filter_map(|&idx| self.items.get(idx))
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new)
+    }
+    fn total_value(&self) -> f64 {
+        self.items.iter()
+            .map(|item| item.price * item.quantity as f64)
+            .sum()
+    }
 }
+
+struct VotingSystem {
+    voting: HashMap<String, u32>
+}
+
+impl VotingSystem {
+    fn new() -> Self {
+        Self {
+          voting: HashMap::new()  
+        }
+    }
+
+    fn vote_for(&mut self, candidate: String) {
+        *self.voting.entry(candidate)
+            .or_insert(0) += 1;
+            
+    }
+
+    fn get_results(&self) -> &HashMap<String, u32> {
+        &self.voting
+    }
+
+    fn get_winners(&self) -> Vec<&String> {
+
+        let mut v: Vec<(&String, &u32)> = self.voting.iter()
+            .collect::<Vec<_>>();
+        v.sort_by(|a, b| b.1.cmp(a.1));
+        v.iter().take(3).map(|(s, n)| *s).collect()
+        
+    }
+}
+
 
 
 fn main() {
-    let data = Arc::new(42);
-    let clone1 = Arc::clone(&data);
-    let clone2 = Arc::clone(&data);
-
-    println!("Reference count: {}", Arc::strong_count(&data));
-
-    let sum: fn(i32, i32) -> i32 = add;
-    println!("Summa: {}", sum(4, 8));
-    println!("Apply operation: {}", apply_operation(3, 8, add));
-
-    let large_value: i32 = 1000;
-    let small_value: i8 = large_value as i8; // Потенциально потеря данных
-
-    println!("Преобразование типа: {:b}", small_value);
-
-    let miles = Miles(5.0);
-    let kilometers: Kilometers = miles.into();
-    println!("5 миль это {} километров", kilometers.0);
-
-    let positive = PositiveNumber::try_from(42);
-    let negative = PositiveNumber::try_from(-42);
-
-    println!("Положительное: {:?}", positive);
-    println!("Отрицательное: {:?}", negative);
-
+    let mut vs = VotingSystem::new();
+        vs.vote_for("C".into());
+        vs.vote_for("Java".into());
+        vs.vote_for("C++".into());
+        vs.vote_for("Java".into());
+        vs.vote_for("Rust".into());
+        vs.vote_for("Rust".into());
+        vs.vote_for("Go".into());
+        vs.vote_for("Julia".into());
+        vs.vote_for("Go".into());
+        vs.vote_for("Rust".into());
+        println!("results: {:?}", vs.get_results());
+        println!("winners: {:?}", vs.get_winners());
 }
