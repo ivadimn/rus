@@ -1,56 +1,39 @@
-use std::collections::BTreeSet;
-// Самобалансирующиеся деревья со своими структурами - не проблема
-// Но свой тип должен реализовывать Eq. А Eq зависит от PartialEq.
-// Eq - про равенство. Для порядка в дереве аналогично нужны PartialOrd и Ord
-#[derive(Ord, PartialOrd, PartialEq, Eq)]
-struct Subscription {
-    user: &'static str,
-    service: &'static str,
+use std::collections::{BTreeSet, HashMap};
+
+fn make_key(word: &str) -> [usize; 128] {
+    let mut key = [0usize; 128];
+    for c in word.chars() {
+        key[c as usize] += 1;
+    }
+    return key;
 }
 
 fn main() {
-    let mut students_class_a: BTreeSet<&'static str> = ["Bob", "Alice"].into();
-    let next_student = "Eva";
-    // .insert() вернёт, был ли элемент Новым
-    if students_class_a.insert(next_student) {
-        println!("added New user: {}", next_student);
-    } else {
-        println!("added Existing user: {}", next_student);
-    }
-    let mut students_class_b = BTreeSet::new();
-    students_class_b.insert("Bob");
-    for in_a_but_not_in_b in students_class_a.difference(&students_class_b) {
-        println!("student '{}' is not in class b", in_a_but_not_in_b);
-    }
-    println!(
-        "the first one, who'll go to the board is: {}",
-        students_class_a.first().unwrap()
-    );
-    println!(
-        "the last one, who'll go to the board is: {}",
-        students_class_a.last().unwrap()
-    );
-    // Элементы отсортированы по возрастанию, в каком бы порядке ни добавлялись
-    assert_eq!(students_class_a.first().unwrap(), &"Alice");
-    students_class_a.remove("Bob");
-    assert!(!students_class_a.contains("Bob"));
-    students_class_a.pop_last();
-    assert!(!students_class_a.contains("Eva"));
-    students_class_a.pop_first();
-    assert!(students_class_a.is_empty());
-
-    let mut subscriptions = BTreeSet::new();
-    subscriptions.insert(Subscription {
-        user: "he",
-        service: "practicum",
-    });
-    subscriptions.insert(Subscription {
-        user: "she",
-        service: "practicum",
-    });
-    subscriptions.insert(Subscription {
-        user: "he",
-        service: "other",
-    });
-    assert_eq!(subscriptions.len(), 3);
+    let input = vec!["aba", "cab", "baa", "aab", "acb", "abc"];
+    
+        let mut groups: HashMap<[usize;128],BTreeSet<&str>> = Default::default();
+    
+        for word in input.iter() { // word имеет тип &str
+    
+            let key = make_key(word);
+            match groups.entry(key) {
+                std::collections::hash_map::Entry::Vacant(v) => {
+                    let mut group = BTreeSet::new();
+                    group.insert(*word);
+                    v.insert(group);
+                },
+                std::collections::hash_map::Entry::Occupied(mut o) => {
+                    o.get_mut().insert(*word);
+                },
+            }
+        }
+        
+        let mut count = 0;
+        for (_, words) in groups.iter() {
+            println!("{}:", count);
+            for word in words.iter() {
+                println!("    {}", word);
+            }
+            count += 1;
+        }
 }
