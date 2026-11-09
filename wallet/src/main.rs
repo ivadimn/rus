@@ -1,3 +1,5 @@
+use std::iter::Filter;
+
 #[derive(Debug,Clone)]
 struct Transaction {
     id: u128,
@@ -16,10 +18,22 @@ struct Wallet {
 }
 impl Wallet {
     // update принимает транзакции, возвращает количество транзакций, которые относились к этому кошельку
-    fn update(&mut self, transactions: /*..todo..*/) -> usize {
+    fn update(&mut self, 
+        transactions: impl IntoIterator<Item=Transaction, IntoIter: Clone>) -> usize {
         // todo
+        let filtered_transactions_vec: Vec<Transaction> = transactions.into_iter().clone()
+            .filter(|t| t.wallet_id == self.id)
+            .filter(|t| !self.latest_history.iter().any(|h| h.id == t.id)).collect();
+
+        self.ballance += filtered_transactions_vec.iter().clone()
+            .map(|ft| ft.sum)
+            .sum::<i64>() as u64;
+       
+        let count_usize = filtered_transactions_vec.iter().count();
         println!("Updated with {} transactions: {:?}", count_usize, filtered_transactions_vec);
+        self.latest_history.extend(filtered_transactions_vec);
         count_usize
+        
     }
 }
 fn main() {
@@ -32,9 +46,9 @@ fn main() {
     let updates2 = std::collections::VecDeque::<Transaction>::from([Transaction::from((4, 32, 150)), (7, 32, 100).into(), (10, 10, 100).into(), (11, 32, -50).into()]);
 
     println!("Got transactions:");
-    // for update in ... { // итерация по транзакциям из updates1 и updates2 - попробуйте .chain()!
-    //  println!("{:?}", update)
-    // }
+    for update in updates1.iter().chain(updates2.iter()) { // итерация по транзакциям из updates1 и updates2 - попробуйте .chain()!
+        println!("{:?}", update)
+    }
     
     assert_eq!(wallet.update(updates1), 2);
     assert_eq!(wallet.ballance, 200);
