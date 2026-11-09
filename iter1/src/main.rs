@@ -5,6 +5,7 @@ struct User {
     id: u32,
     interests: Vec<String>,
 }
+#[derive(Debug)]
 struct Product {
     id: u32,
     tags: Vec<String>,
@@ -15,6 +16,7 @@ struct RecommendationSystem {
     products: Vec<Product>,
 }
 
+#[derive(Debug)]
 struct ProductAndTagsCount(u32, usize);
 
 impl PartialEq for ProductAndTagsCount {
@@ -23,6 +25,7 @@ impl PartialEq for ProductAndTagsCount {
     }
 }
 impl Eq for ProductAndTagsCount {
+    
 }
 impl PartialOrd for ProductAndTagsCount {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -51,22 +54,47 @@ impl RecommendationSystem {
         // 2. Для каждого продукта вычисляет "релевантность" (количество общих тэгов продукта с интересами пользователя) 
         // 3. Возвращает топ-N продуктов
         // ...
-        let int = self.users.iter().clone().find(|u| u.id == user_id);
+        let int = self.users.iter().find(|u| u.id == user_id);
         let Some(user) = int else {
                 println!("User: {} not found!", user_id);
                 return vec![];                
         }; 
-        self.products.iter().clone()
-            .map(|p| { 
-                let mut count = 0u32;
-                p.tags.iter().clone().fold(count, | | )
-                (p.id, count)
-            })
-            .collect();
-        
-        println!("{:?}", int);
+        let mut prait: BinaryHeap<ProductAndTagsCount> = BinaryHeap::new();
+        for pr in self.products.iter() {
+            let mut pcount = 0usize;
+            for tag in pr.tags.iter() {
+                for interes in user.interests.iter() {
+                    if tag == interes {
+                        pcount += 1;
+                    }
+                }
+            }
+            prait.push(ProductAndTagsCount(pr.id, pcount));
+        }
+
+        let mut pa = self.products.iter()
+            .map(|p| {
+                let pat = p.tags.iter().map(|tag| {
+                    let pc = user.interests.iter()
+                        .fold(0, |mut acc: usize, int| {
+                            acc += if int == tag {1} else {0};
+                            acc
+                        });
+                        pc
+                }).map(|arg| ProductAndTagsCount(p.id, arg));
+                pat.collect::<Vec<_>>()
+            });
+
+        while let Some(p) = pa.next() {
+            println!("{:?}", p);
+        }  
         
        
+        // let mut top = pa.iter();
+        // while let Some(p) = top.next() {
+        //     println!("{} - {}", p.0, p.1);
+        // }
+    
         vec![]
     }
 }
