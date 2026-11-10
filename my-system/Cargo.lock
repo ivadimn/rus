@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
-name = "collect"
+name = "bank-system"
 version = "0.1.0"
+
+[[package]]
+name = "my-system"
+version = "0.1.0"
+dependencies = [
+ "bank-system",
+]
