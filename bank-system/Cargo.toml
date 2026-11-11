@@ -7,4 +7,6 @@ edition = "2024"
 name = "bank_system"
 path = "src/lib.rs"
 
-[dependencies]
+[[bin]]
+name = "utils"
+path = "src/bin/utils.rs"
