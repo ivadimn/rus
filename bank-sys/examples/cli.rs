@@ -1,4 +1,4 @@
-use bank_sys::{Name, Storage};
+use bank_sys::{Name, Storage, Balance};
 use std::env;
 
 fn main() {
@@ -24,7 +24,7 @@ fn main() {
             }
             let name: Name = args[2].clone();
             let amount: i64 = args[3].parse().expect("Сумма должна быть целым числом");
-            match storage.deposit(&name, amount) {
+            match storage.deposit(&name, Balance(amount)) {
                 Ok(bal) => {
                     println!("Пополнено '{}' на {}. Баланс: {}", name, amount, bal);
                     // Сохраняем новое состояние в CSV после каждого изменения
@@ -40,7 +40,7 @@ fn main() {
             }
             let name: Name = args[2].clone();
             let amount: i64 = args[3].parse().expect("Сумма должна быть целым числом");
-            match storage.withdraw(&name, amount) {
+            match storage.withdraw(&name, Balance(amount)) {
                 Ok(bal) => {
                     println!("Снято с '{}' {}. Баланс: {}", name, amount, bal);
                     storage.save("balance.csv");

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, Write};
 
 use crate::{Balance, Name};
 
@@ -77,6 +77,12 @@ impl Storage {
             None => Err(format!("Пользователь '{}' не найден", name)),
         }
     }
+
+    pub fn get_all(&self) -> Vec<(Name, Balance)> {
+        self.accounts.iter()
+            .map(|(n, a)| (n.clone(), a.balance))
+            .collect()
+    } 
 
     pub fn load_data(filename: &str) -> Self {
         let mut storage = Storage::new();

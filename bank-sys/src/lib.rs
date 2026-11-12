@@ -9,7 +9,7 @@ use std::fmt::Display;
 
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct Balance(i64);
+pub struct Balance(pub i64);
 
 impl Display for Balance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -42,4 +42,3 @@ impl SubAssign for Balance {
         self.0 -= rhs.0;
     }
 }
-
