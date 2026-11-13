@@ -121,7 +121,7 @@ impl Storage {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
+    use std::{fs::File, io::{BufWriter, Cursor}};
 
 use super::*;
 
@@ -198,7 +198,7 @@ use super::*;
     }
 
     #[test]
-    fn load_data_exiting_file() {
+    fn test_load_data_exiting_file() {
         let file_path = "test_load_1_1_2.csv";
         let mut f = File::create(file_path).unwrap();
         writeln!(f, "John,100").unwrap();
@@ -216,7 +216,32 @@ use super::*;
     }
 
     #[test]
-    fn save_into_file() {
+    fn test_load_data_from_cursor() {
+        let data = b"John,100\nAlice,200\nBob,50";
+        let cursor = Cursor::new(data);
+
+        let mut storage = Storage::new();
+
+        let reader = BufReader::new(cursor);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let parts: Vec<&str> = line.trim().split(',').collect();
+                if parts.len() == 2 {
+                    let name = parts[0].to_string();
+                    let balance: i64 = parts[1].parse().unwrap_or(0);
+                    storage.add_user(name.clone());
+                    storage.deposit(&name, Balance(balance)).unwrap();
+                }
+            }
+        }
+
+        assert_eq!(storage.get_balance(&"John".to_string()), Some(Balance(100)));
+        assert_eq!(storage.get_balance(&"Alice".to_string()), Some(Balance(200)));
+        assert_eq!(storage.get_balance(&"Bob".to_string()), Some(Balance(50)));
+    }
+
+    #[test]
+    fn test_save_into_file() {
         let file_path = "test_save_1_1_2.csv";
         let mut storage = Storage::new();
         storage.add_user("Alice".to_string());
@@ -233,5 +258,32 @@ use super::*;
         fs::remove_file(file_path).unwrap();
         
     }
-   
+
+    #[test]
+    fn test_save_into_cursor() {
+        let mut storage = Storage::new();
+        storage.add_user("Alice".to_string());
+        storage.add_user("Bob".to_string());
+        storage.deposit(&"Alice".to_string(), Balance(100)).unwrap();
+        storage.deposit(&"Bob".to_string(), Balance(200)).unwrap();
+
+        let buffer = Vec::new();
+        let mut cursor = Cursor::new(buffer);
+        {
+            let mut writer = BufWriter::new(&mut cursor);
+            for (name, balance) in storage.get_all() {
+                writeln!(writer, "{},{}", name, balance.0).unwrap();
+            }
+            writer.flush().unwrap();
+        }
+        
+        cursor.set_position(0);
+        let mut lines: Vec<String> = BufReader::new(cursor)
+            .lines()
+            .map(|l| l.unwrap())
+            .collect();
+        lines.sort();
+
+        assert_eq!(lines, vec!["Alice,100", "Bob,200"]);
+    }
 }
