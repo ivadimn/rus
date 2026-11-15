@@ -3,21 +3,10 @@ use std::path::Path;
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 
-use crate::{Balance, Name};
+use crate::{Balance, Name, Account};
 
 const LIMIT: i64 = -1000;
 
-#[derive(Debug, Clone)]
-pub struct Account {
-    pub name: Name,
-    pub balance: Balance,
-}
-
-impl Account {
-    fn new(name: Name) -> Self {
-        Account { name, balance: Balance(0) }
-    }
-}
 
 pub struct Storage {
     accounts: HashMap<Name, Account>,
@@ -48,13 +37,38 @@ impl Storage {
         self.accounts.get(name).map(|acc| acc.balance)
     }
 
+    ///Возвращает общий доход или None, если пользователь не найден
+    pub fn get_incoming(&self, name: &Name) -> Option<Balance> {
+        self.accounts.get(name).map(|acc| acc.incoming)
+    }
+
+    ///Возвращает общий расход или None, если пользователь не найден
+    pub fn get_expense(&self, name: &Name) -> Option<Balance> {
+        self.accounts.get(name).map(|acc| acc.expense)
+    }
+    pub fn restore_user(&mut self, name: &Name, 
+            balance: Balance, incoming: Balance, expense: Balance) -> Option<Balance> {
+        match self.accounts.get_mut(name) {
+            Some(acc) => {
+                acc.balance = balance;
+                acc.incoming = incoming;
+                acc.expense = expense;
+                Some(acc.expense)
+            },
+            None => None
+        }  
+    }
+
     /// Пополняет баланс. Возвращает новый баланс или Err.
     pub fn deposit(&mut self, name: &Name, amount: Balance) -> Result<Balance, String> {
         if amount < Balance(0) {
             return Err("Сумма пополнения не может быть отрицательной".into());
         }
         match self.accounts.get_mut(name) {
-            Some(acc) => { acc.balance.0 += amount.0; Ok(acc.balance) }
+            Some(acc) => { 
+                acc.balance += amount; 
+                acc.incoming += amount;
+                Ok(acc.balance) }
             None => Err(format!("Пользователь '{}' не найден", name)),
         }
     }
@@ -70,7 +84,8 @@ impl Storage {
                     Err(format!("Превышен кредитный лимит: лимит {}, запрошено {}",
                         LIMIT, acc.balance - amount))
                 } else {
-                    acc.balance.0 -= amount.0;
+                    acc.balance -= amount;
+                    acc.expense += amount;
                     Ok(acc.balance)
                 }
             }
@@ -78,11 +93,14 @@ impl Storage {
         }
     }
 
-    pub fn get_all(&self) -> Vec<(Name, Balance)> {
+    pub fn get_all(&self) -> Vec<(Name, Balance, Balance, Balance)> {
         self.accounts.iter()
-            .map(|(n, a)| (n.clone(), a.balance))
+            .map(|(n, a)| (n.clone(), a.balance, a.incoming, a.expense))
             .collect()
     } 
+    pub fn get_accounts(&self) -> &HashMap<Name, Account> {
+        &self.accounts
+    }
 
     pub fn load_data(filename: &str) -> Self {
         let mut storage = Storage::new();
@@ -92,11 +110,13 @@ impl Storage {
             for line in reader.lines() {
                 if let Ok(line) = line {
                     let parts: Vec<&str> = line.trim().split(',').collect();
-                    if parts.len() == 2 {
+                    if parts.len() == 4 {
                         let name = parts[0].to_string();
                         let balance = Balance(parts[1].parse().unwrap_or(0));
+                        let incoming = Balance(parts[2].parse().unwrap_or(0));
+                        let expense = Balance(parts[3].parse().unwrap_or(0));
                         storage.add_user(name.clone());
-                        let _ = storage.deposit(&name, balance);
+                        let _ = storage.restore_user(&name, balance, incoming, expense);
                     }
                 }
             }
@@ -113,7 +133,8 @@ impl Storage {
 
         let mut buffer = String::new();
         for acc in self.accounts.values() {
-            buffer.push_str(&format!("{},{}\n", acc.name, acc.balance.0));
+            buffer.push_str(&format!("{},{},{},{}\n", 
+                acc.name, acc.balance.0, acc.incoming.0, acc.expense.0));
         }
         fs::write(filename, buffer).expect("Не удалось записать файл!");
     }
@@ -201,9 +222,9 @@ use super::*;
     fn test_load_data_exiting_file() {
         let file_path = "test_load_1_1_2.csv";
         let mut f = File::create(file_path).unwrap();
-        writeln!(f, "John,100").unwrap();
-        writeln!(f, "Alice,200").unwrap();
-        writeln!(f, "Bob,50").unwrap();
+        writeln!(f, "John,100,200,100").unwrap();
+        writeln!(f, "Alice,200,300,100").unwrap();
+        writeln!(f, "Bob,50,100,50").unwrap();
 
         let storage = Storage::load_data(file_path);
         assert_eq!(storage.get_balance(&"John".to_string()), Some(Balance(100)));
@@ -217,7 +238,7 @@ use super::*;
 
     #[test]
     fn test_load_data_from_cursor() {
-        let data = b"John,100\nAlice,200\nBob,50";
+        let data = b"John,100,200,100\nAlice,200,300,100\nBob,50,100,50";
         let cursor = Cursor::new(data);
 
         let mut storage = Storage::new();
@@ -226,11 +247,13 @@ use super::*;
         for line in reader.lines() {
             if let Ok(line) = line {
                 let parts: Vec<&str> = line.trim().split(',').collect();
-                if parts.len() == 2 {
+                if parts.len() == 4 {
                     let name = parts[0].to_string();
-                    let balance: i64 = parts[1].parse().unwrap_or(0);
+                    let balance = Balance(parts[1].parse().unwrap_or(0));
+                    let incoming = Balance(parts[2].parse().unwrap_or(0));
+                    let expense = Balance(parts[3].parse().unwrap_or(0));
                     storage.add_user(name.clone());
-                    storage.deposit(&name, Balance(balance)).unwrap();
+                    storage.restore_user(&name, balance, incoming, expense).unwrap();
                 }
             }
         }
@@ -253,7 +276,7 @@ use super::*;
         let content = fs::read_to_string(file_path).unwrap();
         let mut lines: Vec<&str> = content.lines().collect();
         lines.sort();
-        assert_eq!(lines, vec!["Alice,100", "Bob,200"]);
+        assert_eq!(lines, vec!["Alice,100,100,0", "Bob,200,200,0"]);
 
         fs::remove_file(file_path).unwrap();
         
@@ -271,8 +294,8 @@ use super::*;
         let mut cursor = Cursor::new(buffer);
         {
             let mut writer = BufWriter::new(&mut cursor);
-            for (name, balance) in storage.get_all() {
-                writeln!(writer, "{},{}", name, balance.0).unwrap();
+            for (name, balance, incoming, expense) in storage.get_all() {
+                writeln!(writer, "{},{},{},{}", name, balance.0, incoming.0, expense.0).unwrap();
             }
             writer.flush().unwrap();
         }
@@ -284,6 +307,6 @@ use super::*;
             .collect();
         lines.sort();
 
-        assert_eq!(lines, vec!["Alice,100", "Bob,200"]);
+        assert_eq!(lines, vec!["Alice,100,100,0", "Bob,200,200,0"]);
     }
 }

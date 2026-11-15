@@ -95,8 +95,9 @@ fn main() {
                     println!("Список пользователей пуст!");
                     continue;
                 }
-                for (name, balance) in  list {
-                    println!("Имя: {}, баланс: {}", name, balance);
+                for (name, balance, incoming, expense) in  list {
+                    println!("Имя: {}, баланс: {}, доход: {}, расход: {}", 
+                        name, balance, incoming, expense);
                 }
             }
             "exit" => break,
