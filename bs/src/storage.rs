@@ -1,13 +1,13 @@
-//pub mod storage;
 
-pub type Name = String;
-use std::ops::{Sub, Add, AddAssign, SubAssign};
-use std::fmt::Display;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
+use crate::Balance;
+use crate::error::StorageError;
+
+pub type Name = String;
 
 #[derive(Debug, Clone)]
 pub enum Operation {
@@ -16,75 +16,12 @@ pub enum Operation {
     CloseAccount
 }
 
-// struct Transaction {
-//     operation: Operation,
-// }
-
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct Balance(pub i64);
-
-impl Balance {
-    pub fn try_apply(&self, ops: &[&Operation]) -> Vec<&Operation> {
-        let mut err_ops: Vec<&Operation> = Vec::new();
-
-        for op in ops {
-            match &op {
-                Operation::Deposit(amount) => {
-                    if *amount == 0 {
-                        err_ops.push(op.clone());
-                    }
-                },
-                Operation::Withdraw(amount) => {
-                    if *amount as i64 > self.0 {
-                        err_ops.push(op.clone());
-                    }
-                },
-                Operation::CloseAccount => { err_ops.push(op.clone()); }
-            }
-        }
-        err_ops
-    }
-}
-
-impl Display for Balance {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Sub for Balance {
-    type Output = Self;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Self(self.0 - rhs.0)
-    }
-}
-
-impl Add for Balance {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        Self(self.0 + rhs.0)
-    }
-}
-
-impl AddAssign for Balance {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0;
-    }
-}
-
-impl SubAssign for Balance {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.0 -= rhs.0;
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Account {
     pub name: Name,
     pub balance: Balance,
     pub incoming : Balance,
     pub expense: Balance,
-    
 }
 
 impl Account {
@@ -109,57 +46,58 @@ impl Storage {
     }
 
     /// Добавляет пользователя. Some(0) — успех, None — уже существует.
-    pub fn add_user(&mut self, name: Name) -> Option<Balance> {
+    pub fn add_user(&mut self, name: Name) -> Result<Balance, StorageError> {
         if self.accounts.contains_key(&name) {
-            None
+            Err(StorageError::UserExists(name))
         } else {
             self.accounts.insert(name.clone(), Account::new(name));
-            Some(0)
+            Ok(Balance(0))
         }
     }
 
     /// Удаляет пользователя. Some(balance) — успех, None — не найден.
-    pub fn remove_user(&mut self, name: &Name) -> Option<Balance> {
-        self.accounts.remove(name).map(|acc| acc.balance)
+    pub fn remove_user(&mut self, name: &Name) -> Result<Balance, StorageError> {
+        self.accounts.remove(name)
+            .map(|acc| acc.balance)
+            .ok_or(StorageError::UserNotFound(name.into()))
     }
 
     /// Возвращает баланс или None если пользователь не найден.
-    pub fn get_balance(&self, name: &Name) -> Option<Balance> {
-        self.accounts.get(name).map(|acc| acc.balance)
+    pub fn get_balance(&self, name: &Name) -> Result<Balance, StorageError> {
+        self.accounts.get(name)
+            .map(|acc| acc.balance)
+            .ok_or(StorageError::UserNotFound(name.into()))
     }
 
     /// Пополняет баланс. Возвращает новый баланс или Err.
-    pub fn deposit(&mut self, name: &Name, amount: Balance) -> Result<Balance, String> {
-        if amount < 0 {
-            return Err("Сумма пополнения не может быть отрицательной".into());
+    pub fn deposit(&mut self, name: &Name, amount: Balance) -> Result<Balance, StorageError> {
+        if amount < Balance(0) {
+            return Err(StorageError::NegativeAmount(amount));
         }
         match self.accounts.get_mut(name) {
             Some(acc) => {
                 acc.balance += amount;
                 Ok(acc.balance)
             }
-            None => Err(format!("Пользователь '{}' не найден", name)),
+            None => Err(StorageError::UserNotFound(name.into())),
         }
     }
 
     /// Снимает средства. Возвращает новый баланс или Err.
-    pub fn withdraw(&mut self, name: &Name, amount: Balance) -> Result<Balance, String> {
-        if amount < 0 {
+    pub fn withdraw(&mut self, name: &Name, amount: Balance) -> Result<Balance, StorageError> {
+        if amount < Balance(0) {
             return Err("Сумма снятия не может быть отрицательной".into());
         }
         match self.accounts.get_mut(name) {
             Some(acc) => {
                 if acc.balance < amount {
-                    Err(format!(
-                        "Недостаточно средств: баланс {}, запрошено {}",
-                        acc.balance, amount
-                    ))
+                    Err(StorageError::NotEnoughMoney { required: amount, avalaible: acc.balance })
                 } else {
                     acc.balance -= amount;
                     Ok(acc.balance)
                 }
             }
-            None => Err(format!("Пользователь '{}' не найден", name)),
+            None => Err(StorageError::UserNotFound(name.into())),
         }
     }
 
@@ -189,7 +127,7 @@ impl Storage {
                         let name = parts[0].to_string();
                         let balance: i64 = parts[1].parse().unwrap_or(0);
                         storage.add_user(name.clone());
-                        let _ = storage.deposit(&name, balance);
+                        let _ = storage.deposit(&name, Balance(balance));
                     }
                 }
             }
