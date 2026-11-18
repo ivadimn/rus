@@ -1,13 +1,16 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
-use crate::Balance;
+
+use crate::balance::Balance;
 use crate::error::StorageError;
 
 pub type Name = String;
+
+const LIMIT: i64 = -1000;
 
 #[derive(Debug, Clone)]
 pub enum Operation {
@@ -40,15 +43,13 @@ pub struct Storage {
 
 impl Storage {
     pub fn new() -> Self {
-        Storage {
-            accounts: HashMap::new(),
-        }
+        Storage { accounts: HashMap::new() }
     }
 
     /// Добавляет пользователя. Some(0) — успех, None — уже существует.
     pub fn add_user(&mut self, name: Name) -> Result<Balance, StorageError> {
         if self.accounts.contains_key(&name) {
-            Err(StorageError::UserExists(name))
+            Err(StorageError::UserExists(name.into()))
         } else {
             self.accounts.insert(name.clone(), Account::new(name));
             Ok(Balance(0))
@@ -56,17 +57,44 @@ impl Storage {
     }
 
     /// Удаляет пользователя. Some(balance) — успех, None — не найден.
-    pub fn remove_user(&mut self, name: &Name) -> Result<Balance, StorageError> {
-        self.accounts.remove(name)
-            .map(|acc| acc.balance)
-            .ok_or(StorageError::UserNotFound(name.into()))
+    pub fn remove_user(&mut self, name: &Name) -> Option<Balance> {
+        self.accounts.remove(name).map(|acc| acc.balance)
     }
 
-    /// Возвращает баланс или None если пользователь не найден.
+    /// Возвращает баланс или None, если пользователь не найден.
     pub fn get_balance(&self, name: &Name) -> Result<Balance, StorageError> {
         self.accounts.get(name)
             .map(|acc| acc.balance)
             .ok_or(StorageError::UserNotFound(name.into()))
+        
+    }
+
+    ///Возвращает общий доход или None, если пользователь не найден
+    pub fn get_incoming(&self, name: &Name) -> Result<Balance, StorageError> {
+        self.accounts.get(name)
+            .map(|acc| acc.incoming)
+            .ok_or(StorageError::UserNotFound(name.into()))
+    }
+
+    ///Возвращает общий расход или None, если пользователь не найден
+    pub fn get_expense(&self, name: &Name) -> Result<Balance, StorageError> {
+        self.accounts.get(name)
+            .map(|acc| acc.expense)
+            .ok_or(StorageError::UserNotFound(name.into()))
+    }
+    
+    //восстанавливает данные пользователя из файла
+    pub fn restore_user(&mut self, name: &Name, 
+            balance: Balance, incoming: Balance, expense: Balance) -> Result<Balance, StorageError> {
+        match self.accounts.get_mut(name) {
+            Some(acc) => {
+                acc.balance = balance;
+                acc.incoming = incoming;
+                acc.expense = expense;
+                Ok(acc.balance)
+            },
+            None => Err(StorageError::UserNotFound(name.into()))
+        }  
     }
 
     /// Пополняет баланс. Возвращает новый баланс или Err.
@@ -75,10 +103,10 @@ impl Storage {
             return Err(StorageError::NegativeAmount(amount));
         }
         match self.accounts.get_mut(name) {
-            Some(acc) => {
-                acc.balance += amount;
-                Ok(acc.balance)
-            }
+            Some(acc) => { 
+                acc.balance += amount; 
+                acc.incoming += amount;
+                Ok(acc.balance) }
             None => Err(StorageError::UserNotFound(name.into())),
         }
     }
@@ -86,14 +114,15 @@ impl Storage {
     /// Снимает средства. Возвращает новый баланс или Err.
     pub fn withdraw(&mut self, name: &Name, amount: Balance) -> Result<Balance, StorageError> {
         if amount < Balance(0) {
-            return Err("Сумма снятия не может быть отрицательной".into());
+            return Err(StorageError::NegativeAmount(amount));
         }
         match self.accounts.get_mut(name) {
             Some(acc) => {
-                if acc.balance < amount {
-                    Err(StorageError::NotEnoughMoney { required: amount, avalaible: acc.balance })
+                if acc.balance - amount < Balance(LIMIT) {
+                    Err(StorageError::NotEnoughMoney { required: amount, avalaible: Balance(LIMIT)})
                 } else {
                     acc.balance -= amount;
+                    acc.expense += amount;
                     Ok(acc.balance)
                 }
             }
@@ -101,196 +130,217 @@ impl Storage {
         }
     }
 
-    /// Возвращает всех пользователей и их балансы.
-    pub fn get_all(&self) -> Vec<(Name, Balance)> {
-        self.accounts
-            .iter()
-            .map(|(n, acc)| (n.clone(), acc.balance))
+    pub fn get_all(&self) -> Vec<(Name, Balance, Balance, Balance)> {
+        self.accounts.iter()
+            .map(|(n, a)| (n.clone(), a.balance, a.incoming, a.expense))
             .collect()
+    } 
+    pub fn get_accounts(&self) -> &HashMap<Name, Account> {
+        &self.accounts
     }
 
-    /// Загружает данные из CSV-файла формата "Name,Balance".
-    /// Если файл не существует — создаёт хранилище с пользователями по умолчанию.
-    pub fn load_data(file: &str) -> Storage {
+    pub fn load_data(filename: &str) -> Self {
         let mut storage = Storage::new();
-
-        if Path::new(file).exists() {
-            let f = fs::File::open(file).unwrap();
-            // BufReader читает данные блоками, а не байт за байтом —
-            // это делает построчное чтение через .lines() быстрым и эффективным
+        if Path::new(filename).exists() {
+            let f = fs::File::open(filename).unwrap();
             let reader = BufReader::new(f);
-
             for line in reader.lines() {
                 if let Ok(line) = line {
                     let parts: Vec<&str> = line.trim().split(',').collect();
-                    if parts.len() == 2 {
+                    if parts.len() == 4 {
                         let name = parts[0].to_string();
-                        let balance: i64 = parts[1].parse().unwrap_or(0);
-                        storage.add_user(name.clone());
-                        let _ = storage.deposit(&name, Balance(balance));
+                        let balance = Balance(parts[1].parse().unwrap_or(0));
+                        let incoming = Balance(parts[2].parse().unwrap_or(0));
+                        let expense = Balance(parts[3].parse().unwrap_or(0));
+                        if let Err(err) = storage.add_user(name.clone()) {
+                            println!("{}", err);
+                        } else {
+                            let _ = storage.restore_user(&name, balance, incoming, expense);
+                        }
                     }
                 }
             }
-        } else {
-            // Файла нет — создаём пользователей с нуля
-            for u in ["John", "Alice", "Bob", "Vasya"] {
-                storage.add_user(u.to_string());
-            }
         }
-
+        // else {
+        //     //создаём банк с нуля
+        //     for user in ["Bod", "Alice", "John", "Vasya"] {
+        //         storage.add_user(user.to_string()).unwrap();
+        //     } 
+        // }
         storage
     }
 
-    /// Сохраняет текущее состояние в CSV-файл формата "Name,Balance".
-    /// Используем fs::write — данные собираются в строку целиком и записываются одним вызовом.
-    pub fn save(&self, file: &str) {
-        let mut data = String::new();
-        for (name, balance) in self.get_all() {
-            data.push_str(&format!("{},{}\n", name, balance));
+    pub fn save(&self, filename: &str) {
+
+        let mut buffer = String::new();
+        for acc in self.accounts.values() {
+            buffer.push_str(&format!("{},{},{},{}\n", 
+                acc.name, acc.balance.0, acc.incoming.0, acc.expense.0));
         }
-        fs::write(file, data).expect("Не удалось записать файл");
+        fs::write(filename, buffer).expect("Не удалось записать файл!");
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::fs::{self, File};
-    use std::io::{BufReader, BufWriter, Cursor, Write};
+    use std::{fs::File, io::{BufWriter, Cursor}};
+
+use super::*;
 
     #[test]
-    fn test_add_user() {
-        let mut storage = Storage::new();
-        assert_eq!(storage.add_user("Alice".to_string()), Some(0));
-        assert_eq!(storage.add_user("Alice".to_string()), None);
+    fn test_new_storage_is_empty() {
+        let storage = Storage::new();
+        assert_eq!(storage.accounts.len(), 0);
     }
 
     #[test]
-    fn test_remove_user() {
+    fn test_add_user_success() {
+        let mut storage = Storage::new();
+        assert_eq!(storage.add_user("Alice".to_string()).unwrap(), Balance(0));
+    }
+
+    #[test]
+    fn test_add_user_duplicate() {
+        let mut storage = Storage::new();
+        storage.add_user("Alice".to_string());
+        assert!(storage.add_user("Alice".to_string()).is_err());
+    }
+
+    #[test]
+    fn test_deposit_increases_balance() {
         let mut storage = Storage::new();
         storage.add_user("Bob".to_string());
-        storage.deposit(&"Bob".to_string(), 100).unwrap();
-        assert_eq!(storage.remove_user(&"Bob".to_string()), Some(100));
-        assert_eq!(storage.remove_user(&"Bob".to_string()), None);
-    }
-
-    #[test]
-    fn test_nonexistent_user() {
-        let mut storage = Storage::new();
-        assert!(storage.deposit(&"Dana".to_string(), 100).is_err());
-        assert!(storage.withdraw(&"Dana".to_string(), 50).is_err());
-        assert_eq!(storage.get_balance(&"Dana".to_string()), None);
+        assert_eq!(storage.deposit(&"Bob".to_string(), Balance(500)).unwrap(), Balance(500));
     }
 
     #[test]
     fn test_deposit_negative_fails() {
         let mut storage = Storage::new();
-        storage.add_user("Eve".to_string());
-        assert!(storage.deposit(&"Eve".to_string(), -50).is_err());
+        storage.add_user("Bob".to_string());
+        assert!(storage.deposit(&"Bob".to_string(), Balance(-100)).is_err());
+    }
+
+    #[test]
+    fn test_withdraw_success() {
+        let mut storage = Storage::new();
+        storage.add_user("Charlie".to_string());
+        storage.deposit(&"Charlie".to_string(), Balance(300)).unwrap();
+        assert_eq!(storage.withdraw(&"Charlie".to_string(), Balance(100)).unwrap(), Balance(200));
     }
 
     #[test]
     fn test_withdraw_insufficient_funds() {
         let mut storage = Storage::new();
-        storage.add_user("Frank".to_string());
-        storage.deposit(&"Frank".to_string(), 100).unwrap();
-        assert!(storage.withdraw(&"Frank".to_string(), 200).is_err());
+        storage.add_user("Dana".to_string());
+        storage.deposit(&"Dana".to_string(), Balance(500)).unwrap();
+        // Пытаемся снять больше, чем есть, — ошибка
+        assert!(storage.withdraw(&"Dana".to_string(), Balance(2000)).is_err());
         // Баланс не изменился
-        assert_eq!(storage.get_balance(&"Frank".to_string()), Some(100));
+        assert_eq!(storage.get_balance(&"Dana".to_string()).unwrap(), Balance(500));
     }
 
-    // --- Тесты для работы с файлами ---
+    #[test]
+    fn test_withdraw_within_the_limit() {
+        let mut storage = Storage::new();
+        storage.add_user("Dana".to_string());
+        storage.deposit(&"Dana".to_string(), Balance(500)).unwrap();
+        // Пытаемся снять больше, чем есть, — ошибка
+        assert_eq!(storage.withdraw(&"Dana".to_string(), Balance(1000)).unwrap(),Balance(-500));
+        // Баланс не изменился
+        //assert_eq!(storage.get_balance(&"Dana".to_string()), Some(50));
+    }
 
     #[test]
-    fn test_load_data_existing_file() {
-        let file_path = "test_load_1_1_2.csv";
+    fn test_nonexistent_user_operations() {
+        let mut storage = Storage::new();
+        assert!(storage.deposit(&"Ghost".to_string(), Balance(100)).is_err());
+        assert!(storage.withdraw(&"Ghost".to_string(), Balance(50)).is_err());
+        assert!(storage.get_balance(&"Ghost".to_string()).is_err());
+        assert_eq!(storage.remove_user(&"Ghost".to_string()), None);
+    }
 
-        // Создаём CSV-файл вручную
+    #[test]
+    fn test_load_data_exiting_file() {
+        let file_path = "test_load_1_1_2.csv";
         let mut f = File::create(file_path).unwrap();
-        writeln!(f, "John,100").unwrap();
-        writeln!(f, "Alice,200").unwrap();
-        writeln!(f, "Bob,50").unwrap();
+        writeln!(f, "John,100,200,100").unwrap();
+        writeln!(f, "Alice,200,300,100").unwrap();
+        writeln!(f, "Bob,50,100,50").unwrap();
 
         let storage = Storage::load_data(file_path);
+        assert_eq!(storage.get_balance(&"John".to_string()).unwrap(), Balance(100));
+        assert_eq!(storage.get_balance(&"Alice".to_string()).unwrap(),Balance(200));
+        assert_eq!(storage.get_balance(&"Bob".to_string()).unwrap(), Balance(50));
 
-        assert_eq!(storage.get_balance(&"John".to_string()), Some(100));
-        assert_eq!(storage.get_balance(&"Alice".to_string()), Some(200));
-        assert_eq!(storage.get_balance(&"Bob".to_string()), Some(50));
-        // Vasya не был в файле — None
-        assert_eq!(storage.get_balance(&"Vasya".to_string()), None);
-
-        fs::remove_file(file_path).unwrap();
-    }
-
-    #[test]
-    fn test_save_creates_file_with_correct_data() {
-        let file_path = "test_save_1_1_2.csv";
-
-        let mut storage = Storage::new();
-        storage.add_user("John".to_string());
-        storage.add_user("Alice".to_string());
-        storage.deposit(&"John".to_string(), 150).unwrap();
-        storage.deposit(&"Alice".to_string(), 300).unwrap();
-
-        storage.save(file_path);
-
-        let contents = fs::read_to_string(file_path).unwrap();
-        let mut lines: Vec<&str> = contents.lines().collect();
-        // Сортируем — HashMap не гарантирует порядок
-        lines.sort();
-
-        assert_eq!(lines, vec!["Alice,300", "John,150"]);
+        assert!(storage.get_balance(&"Vasya".to_string()).is_err());
 
         fs::remove_file(file_path).unwrap();
     }
-
-    // --- Тесты с Cursor (вместо реальных файлов) ---
 
     #[test]
     fn test_load_data_from_cursor() {
-        // Cursor позволяет читать из памяти так же, как из файла
-        let data = b"John,100\nAlice,200\nBob,50\n";
-        let mut cursor = Cursor::new(&data[..]);
+        let data = b"John,100,200,100\nAlice,200,300,100\nBob,50,100,50";
+        let cursor = Cursor::new(data);
 
         let mut storage = Storage::new();
-        let reader = BufReader::new(&mut cursor);
+
+        let reader = BufReader::new(cursor);
         for line in reader.lines() {
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            if parts.len() == 2 {
-                let name = parts[0].to_string();
-                let balance: i64 = parts[1].parse().unwrap_or(0);
-                storage.add_user(name.clone());
-                storage.deposit(&name, balance).unwrap();
+            if let Ok(line) = line {
+                let parts: Vec<&str> = line.trim().split(',').collect();
+                if parts.len() == 4 {
+                    let name = parts[0].to_string();
+                    let balance = Balance(parts[1].parse().unwrap_or(0));
+                    let incoming = Balance(parts[2].parse().unwrap_or(0));
+                    let expense = Balance(parts[3].parse().unwrap_or(0));
+                    storage.add_user(name.clone());
+                    storage.restore_user(&name, balance, incoming, expense).unwrap();
+                }
             }
         }
 
-        assert_eq!(storage.get_balance(&"John".to_string()), Some(100));
-        assert_eq!(storage.get_balance(&"Alice".to_string()), Some(200));
-        assert_eq!(storage.get_balance(&"Bob".to_string()), Some(50));
-        assert_eq!(storage.get_balance(&"Vasya".to_string()), None);
+        assert_eq!(storage.get_balance(&"John".to_string()).unwrap(), Balance(100));
+        assert_eq!(storage.get_balance(&"Alice".to_string()).unwrap(), Balance(200));
+        assert_eq!(storage.get_balance(&"Bob".to_string()).unwrap(), Balance(50));
     }
 
     #[test]
-    fn test_save_writes_to_cursor_correctly() {
+    fn test_save_into_file() {
+        let file_path = "test_save_1_1_2.csv";
         let mut storage = Storage::new();
-        storage.add_user("John".to_string());
-        storage.add_user("Alice".to_string());
-        storage.deposit(&"John".to_string(), 150).unwrap();
-        storage.deposit(&"Alice".to_string(), 300).unwrap();
+        storage.add_user("Alice".to_string()).unwrap();
+        storage.add_user("Bob".to_string()).unwrap();
+        storage.deposit(&"Alice".to_string(), Balance(100)).unwrap();
+        storage.deposit(&"Bob".to_string(), Balance(200)).unwrap();
+        storage.save(file_path);
 
-        // Пишем в Cursor вместо файла на диске
+        let content = fs::read_to_string(file_path).unwrap();
+        let mut lines: Vec<&str> = content.lines().collect();
+        lines.sort();
+        assert_eq!(lines, vec!["Alice,100,100,0", "Bob,200,200,0"]);
+
+        fs::remove_file(file_path).unwrap();
+        
+    }
+
+    #[test]
+    fn test_save_into_cursor() {
+        let mut storage = Storage::new();
+        storage.add_user("Alice".to_string()).unwrap();
+        storage.add_user("Bob".to_string()).unwrap();
+        storage.deposit(&"Alice".to_string(), Balance(100)).unwrap();
+        storage.deposit(&"Bob".to_string(), Balance(200)).unwrap();
+
         let buffer = Vec::new();
         let mut cursor = Cursor::new(buffer);
         {
             let mut writer = BufWriter::new(&mut cursor);
-            for (name, balance) in storage.get_all() {
-                writeln!(writer, "{},{}", name, balance).unwrap();
+            for (name, balance, incoming, expense) in storage.get_all() {
+                writeln!(writer, "{},{},{},{}", name, balance.0, incoming.0, expense.0).unwrap();
             }
             writer.flush().unwrap();
         }
-
-        // Читаем обратно из памяти
+        
         cursor.set_position(0);
         let mut lines: Vec<String> = BufReader::new(cursor)
             .lines()
@@ -298,6 +348,6 @@ mod tests {
             .collect();
         lines.sort();
 
-        assert_eq!(lines, vec!["Alice,300", "John,150"]);
+        assert_eq!(lines, vec!["Alice,100,100,0", "Bob,200,200,0"]);
     }
 }

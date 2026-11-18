@@ -16,7 +16,7 @@ impl Display for StorageError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::UserNotFound(user) => write!(f, "Пользователь: {} не найден.", user),
-            Self::NotEnoughMoney { required, avalaible } => write!(f, "Недостаточно средств: баланс {}, запрошено {}",
+            Self::NotEnoughMoney { required, avalaible } => write!(f, "Превышен кредитный лимит: лимит {}, запрошено {}",
                 avalaible, required),
             Self::UserExists(user) => write!(f, "Пользователь: {} уже существует.", user),
             Self::NegativeAmount(amount) => write!(f, "Сумма пополнения: {} не может быть отрицательной", amount),
