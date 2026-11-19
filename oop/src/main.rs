@@ -4,19 +4,25 @@
 #![allow(unused_mut)]
 
 
-fn get_first_word(s: &str) -> &str {
-    let bytes = s.as_bytes();
-    for (i, &item) in bytes.iter().enumerate() {
-        if item == b' ' {
-            return &s[0..i];
-        }
-    }
-    &s
+use std::fmt::Display;
+
+fn print_pair<T: Display>(a: T, b: T) {
+    // ваш код здесь
+    println!("{},{}", a, b);
+}
+
+fn largest<T: PartialOrd + Ord>(list: &[T]) -> &T {
+    // ваш код здесь
+    list.iter().max().unwrap()
 }
 
 fn main() {
-    let my_string = String::from("Hello world");
-    let word = get_first_word(&my_string);
-    //drop(my_string);
-    println!("First word: {}", word);
+    print_pair(1, 2);             // → 1, 2
+    print_pair("hello", "world"); // → hello, world
+
+    let numbers = vec![34, 50, 25, 100, 65];
+    println!("{}", largest(&numbers)); // → 100
+    
+    let chars = vec!['y', 'm', 'a', 'q'];
+    println!("{}", largest(&chars));   // → y
 }
