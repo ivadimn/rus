@@ -8,6 +8,7 @@ use std::io::{self, Write};
 mod balance;
 mod storage;
 mod error;
+mod transaction;
 use crate::storage::Storage;
 use crate::balance::Balance;
 
