@@ -11,15 +11,18 @@ mod error;
 mod transaction;
 use crate::storage::Storage;
 use crate::balance::Balance;
+use crate::transaction::{Deposit, Transaction, Transfer, Withdraw};
+
 
 fn help_print() {
     println!("\nВведите команду:");
-    println!("add <username> <summa>      - добавить пользователя.");
-    println!("deposit <username> <summa>  - положить деньги.");
-    println!("withdraw <username> <summa> - снять деньги.");
-    println!("balance <username>          - показать баланс пользователя.");
-    println!("list                        - показать список пользователей.");
-    println!("exit                        - закрыть программу.");
+    println!("add <username> <summa>       - добавить пользователя.");
+    println!("deposit <username> <summa>   - положить деньги.");
+    println!("withdraw <username> <summa>  - снять деньги.");
+    println!("transfer <from> <to> <summa> - перевести деньги со счёта на счёт.");
+    println!("balance <username>           - показать баланс пользователя.");
+    println!("list                         - показать список пользователей.");
+    println!("exit                         - закрыть программу.");
     //println!("add <username> - добавить пользователя.");
     
 }
@@ -73,10 +76,17 @@ fn main() {
                     continue;
                 };
 
-                match storage.deposit(&name, Balance(balance)) {
-                    Ok(balance) => { 
-                        println!("Баланс пользователе с именем {} увеличен текущзий баланс: {}", name, balance);
+                let dep = Deposit {
+                    account: name.clone(),
+                    amount: Balance(balance),
+                };
+                
+                match dep.apply(&mut storage) {
+                    Ok(_) => {
+                        println!("Баланс пользователе с именем {} увеличен текущзий баланс: {}", 
+                            name, storage.get_balance(&name).unwrap());
                         storage.save(filename);
+
                     },
                     Err(err) => println!("Ошибка увеличения баланса: {}", err),
                 }
@@ -92,12 +102,47 @@ fn main() {
                     continue;
                 };
 
-                match storage.withdraw(&name, Balance(balance)) {
-                    Ok(balance) =>  {
-                        println!("Баланс пользователе {} уменьшен текущзий баланс: {}", name, balance);
+                let wd = Withdraw {
+                    account:  name.clone(),
+                    amount: Balance(balance),
+                };
+
+                match wd.apply(&mut storage) {
+                    Ok(_) => {
+                        println!("Деньги в сумме: {} списаны со счёта: {}", 
+                            balance, name );
                         storage.save(filename);
+
                     },
-                    Err(err) => println!("Ошибка изменения баланса: {}", err),
+                    Err(err) => println!("Ошибка списания средств: {}", err),
+                }
+            },
+            "transfer" => {
+                if args.len() != 4 {
+                    println!("Пример использования: transfer Alice Bob 100");
+                    continue;
+                }
+                let from = args[1].to_string();
+                let to = args[2].to_string();
+                let Ok(balance) = args[3].parse::<i64>() else {
+                    println!("Не правильно введена сумма!");
+                    continue;
+                };
+
+                let tx = Transfer {
+                    from: from.clone(),
+                    to: to.clone(),
+                    amount: Balance(balance),
+                };
+                
+                match tx.apply(&mut storage) {
+                    Ok(_) => {
+                        println!("Деньги в сумме {} перведены со счёта: {} на счёт: {}", 
+                            balance, from, to);
+                        storage.save(filename);
+
+                    },
+                    Err(err) => println!("Ошибка перевода средств: {}", err),
                 }
             },
             "balance" => {

@@ -16,6 +16,26 @@ fn largest<T: PartialOrd + Ord>(list: &[T]) -> &T {
     list.iter().max().unwrap()
 }
 
+#[macro_export]
+macro_rules! say_hello {
+    () => {
+        println!("Hello world!");
+    };
+}
+
+#[macro_export]
+macro_rules! say {
+    ($msg:expr) => {
+        println!("{}", $msg);
+    };
+}
+
+macro_rules! log {
+    ($LEVEL:expr, $msg:expr ) => {
+       println!("[{}] {}", $LEVEL, $msg);
+    };
+}
+
 fn main() {
     print_pair(1, 2);             // → 1, 2
     print_pair("hello", "world"); // → hello, world
@@ -25,4 +45,8 @@ fn main() {
     
     let chars = vec!['y', 'm', 'a', 'q'];
     println!("{}", largest(&chars));   // → y
+
+    say_hello!();
+    say!("Привет Rust macro");
+    log!("DEBUG", "Ошибка");
 }
