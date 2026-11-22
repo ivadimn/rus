@@ -129,7 +129,7 @@ impl_add! {
     (Deposit, Transfer),
     (Transfer, Deposit),
     (Deposit, Deposit),
-
+    (Transfer, Transfer),
 }
 
 

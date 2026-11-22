@@ -1,0 +1,14 @@
+[package]
+name = "bsl"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "bsl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "util"
+path = "src/bin/util.rs"
+
+[dependencies]
