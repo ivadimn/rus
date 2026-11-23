@@ -8,6 +8,7 @@ use std::io::{self, Write};
 use bsl::{Storage};
 use bsl::balance::Balance;
 use bsl::transaction::{Deposit, Transaction, Transfer, Withdraw, TxCombinator};
+use bsl::tx_chain;
 
 fn help_print() {
     println!("\nВведите команду:");
@@ -27,6 +28,12 @@ fn main() {
     let filename = "bank.csv";
     println!("Программа обслуживания банковских счетов.");
     let mut storage = Storage::load_data(filename);
+
+    let tx = tx_chain!(
+        Deposit { account: "Alice".into(), amount: Balance(500) },
+        Transfer { from: "Alice".into(), to: "Bob".into(), amount: Balance(50) },
+        Withdraw { account: "Alice".into(), amount: Balance(100) }
+    );
     
     loop {
         help_print();

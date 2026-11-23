@@ -12,3 +12,4 @@ name = "util"
 path = "src/bin/util.rs"
 
 [dependencies]
+bsl_macros = {path = "bsl_macros"}

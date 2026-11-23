@@ -4,20 +4,7 @@ use std::ops::Add;
 use crate::storage::{Name, Storage};
 use crate::balance::Balance;
 use crate::error::StorageError;
-
-#[macro_export]
-macro_rules! impl_add {
-    ( $( ($lhs:ty, $rhs:ty) ),* $(,)?) => {
-        $ (
-            impl Add<$rhs> for $lhs {
-                type Output = TxCombinator<$lhs, $rhs>;
-                fn add(self, rhs: $rhs) -> Self::Output {
-                    TxCombinator {tx1: self, tx2: rhs }
-                }
-            }
-         )*
-    };
-}
+use crate::impl_add;
 
 pub trait Transaction {
     fn apply(&self, storage: &mut Storage) -> Result<(), StorageError>;
@@ -42,8 +29,8 @@ pub struct Withdraw {
 
 
 pub struct TxCombinator<T: Transaction, U: Transaction> {
-    tx1: T,
-    tx2: U,
+    pub tx1: T,
+    pub tx2: U,
 }
 
 impl<T: Transaction, U: Transaction> Transaction for TxCombinator<T, U>  {
