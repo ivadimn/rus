@@ -1,27 +1,36 @@
 use std::ops::Add;
 
+use bsl_macros::{ Describable, Transaction};
 
 use crate::storage::{Name, Storage};
 use crate::balance::Balance;
 use crate::error::StorageError;
-use crate::impl_add;
+use crate::{impl_add, transaction};
 
 pub trait Transaction {
     fn apply(&self, storage: &mut Storage) -> Result<(), StorageError>;
 }
 
+pub trait Describable {
+    fn describe(&self) -> String;
+}
 
+#[derive(Describable, Transaction)]
 pub struct Deposit {
     pub account: Name,
     pub amount: Balance,
 }
 
+#[derive(Transaction)]
+#[transaction("transfer")]
 pub struct Transfer { 
     pub from: Name,
     pub to: Name,
     pub amount: Balance,
 }
 
+#[derive(Transaction)]
+#[transaction("withdraw")]
 pub struct Withdraw {
     pub account: Name,
     pub amount: Balance,
@@ -41,41 +50,41 @@ impl<T: Transaction, U: Transaction> Transaction for TxCombinator<T, U>  {
     }
 }
 
-impl Transaction for Deposit {
-    fn apply(&self, storage: &mut Storage) -> Result<(), StorageError> {
-        match  storage.get_accounts().get(&self.account) {
+// impl Transaction for Deposit {
+//     fn apply(&self, storage: &mut Storage) -> Result<(), StorageError> {
+//         match  storage.get_accounts().get(&self.account) {
 
-            Some(_) => storage.deposit(&self.account, self.amount)?, 
-            None => return Err(StorageError::UserNotFound(self.account.clone())),
-        };
-        Ok(())
-    }
-}
+//             Some(_) => storage.deposit(&self.account, self.amount)?, 
+//             None => return Err(StorageError::UserNotFound(self.account.clone())),
+//         };
+//         Ok(())
+//     }
+// }
 
-impl Transaction for Transfer {
-    fn apply(&self, storage: &mut Storage) -> Result<(), StorageError> {
+// impl Transaction for Transfer {
+//     fn apply(&self, storage: &mut Storage) -> Result<(), StorageError> {
         
-        if !storage.get_accounts().contains_key(&self.to) {
-            return Err(StorageError::UserNotFound(self.to.clone()));
-        }
+//         if !storage.get_accounts().contains_key(&self.to) {
+//             return Err(StorageError::UserNotFound(self.to.clone()));
+//         }
 
-        storage.withdraw(&self.from, self.amount)?;
-        storage.deposit(&self.to, self.amount)?;
+//         storage.withdraw(&self.from, self.amount)?;
+//         storage.deposit(&self.to, self.amount)?;
         
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
 
-impl Transaction for Withdraw  {
-    fn apply(&self, storage: &mut Storage) -> Result<(), StorageError> {
-        match  storage.get_accounts().get(&self.account) {
+// impl Transaction for Withdraw  {
+//     fn apply(&self, storage: &mut Storage) -> Result<(), StorageError> {
+//         match  storage.get_accounts().get(&self.account) {
 
-            Some(_) => storage.withdraw(&self.account, self.amount)?, 
-            None => return Err(StorageError::UserNotFound(self.account.clone())),
-        };
-        Ok(())
-    }
-}
+//             Some(_) => storage.withdraw(&self.account, self.amount)?, 
+//             None => return Err(StorageError::UserNotFound(self.account.clone())),
+//         };
+//         Ok(())
+//     }
+// }
  
 /* impl Add<Deposit> for Transfer {
     type Output = TxCombinator<Transfer, Deposit>;

@@ -1,9 +1,11 @@
 // bin/macros_demo.rs
 
 use bsl::{tx_chain, create_users};
+use bsl::transaction::{Describable, Transaction};
 use bsl::Storage;
-use bsl::transaction::{Deposit, Transaction, Transfer, Withdraw};
+use bsl::transaction::{Deposit, Transfer, Withdraw};
 use bsl::balance::Balance;
+use bsl_macros::{say_hello, Describable};
 
 fn main() {
     let mut storage = Storage::new();
@@ -25,4 +27,13 @@ fn main() {
     for (name, balance, inc, exp) in storage.get_all() {
         println!("{} -> {}, {}, {}", name, balance, inc, exp);
     }
+
+    say_hello!("Привет из процедурного макроса");
+
+    let d = Deposit { account: "Vasia".into(), amount: Balance(100) };
+    storage.add_user("Vasia".into()).unwrap();
+       println!("{}", d.describe()); // → Я — структура Deposit
+    let _ = d.apply(&mut storage);
+    
+
 }
