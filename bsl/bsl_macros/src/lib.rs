@@ -1,4 +1,4 @@
-use proc_macro::TokenStream;
+use proc_macro::{Ident, TokenStream};
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
@@ -20,15 +20,26 @@ pub fn derive_describable(input: TokenStream) -> TokenStream {
 
     // Шаг 2 берём имя структцры
     let name = input.ident;
+    let field_names: Vec<_> = if let syn::Data::Struct(data) = &input.data {
+        if let syn::Fields::Named(fields) = &data.fields {
+            fields.named.iter()
+                .map(|f| f.ident.as_ref().unwrap().clone())
+                .collect()
+        } else { vec![] }
+    } else { vec![] };
 
     //Шаг 3 генерируем реализацию
     let expanded = quote! {
         impl Describable for #name {
             fn describe(&self) -> String {
-                format!("Я - структура {}", stringify!(#name))
+                let fields = vec![
+                    #( format!("{}: {:?}", stringify!(#field_names), self.#field_names) ),*
+                ];
+                format!("{} {{ {} }}", stringify!(#name), fields.join(", "))
             }
         }
     };
+
     TokenStream::from(expanded)
 }
 
