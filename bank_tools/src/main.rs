@@ -1,3 +1,4 @@
+use bank_tools::csv_format::read_csv;
 fn main() {
-    println!("Hello, world!");
+    let v = read_csv("trans.csv");
 }
